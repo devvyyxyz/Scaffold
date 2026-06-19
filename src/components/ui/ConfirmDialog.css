@@ -1,0 +1,61 @@
+.confirmOverlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.45);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 1000;
+  animation: confirmFade var(--dur-fast) var(--ease-out);
+}
+
+@keyframes confirmFade {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+.confirmDialog {
+  background: var(--bg-surface);
+  border: 1px solid var(--border-default);
+  border-radius: var(--radius-lg);
+  box-shadow: var(--shadow-lg);
+  padding: var(--sp-5);
+  max-width: 420px;
+  width: calc(100% - var(--sp-8));
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-3);
+  animation: confirmPop var(--dur-base) var(--ease-out);
+}
+
+@keyframes confirmPop {
+  from { transform: scale(0.96); opacity: 0; }
+  to { transform: scale(1); opacity: 1; }
+}
+
+.confirmTitle {
+  font-size: var(--fs-base);
+  font-weight: var(--fw-bold);
+  margin: 0;
+}
+
+.confirmMessage {
+  font-size: var(--fs-sm);
+  color: var(--fg-secondary);
+  line-height: 1.5;
+}
+
+.confirmError {
+  font-size: var(--fs-xs);
+  color: var(--danger, var(--accent));
+  background: var(--accent-subtle);
+  padding: var(--sp-2) var(--sp-3);
+  border-radius: var(--radius-md);
+}
+
+.confirmActions {
+  display: flex;
+  justify-content: flex-end;
+  gap: var(--sp-2);
+  margin-top: var(--sp-2);
+}

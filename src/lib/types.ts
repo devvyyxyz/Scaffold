@@ -23,6 +23,8 @@ export interface Project {
   archived?: boolean;
   /** When the project was archived. */
   archivedAt?: number;
+  /** The project path before archiving, so Restore can return it. */
+  archivedFrom?: string;
 }
 
 /** The `.scaffold/manifest.json` shape written into each project folder. */

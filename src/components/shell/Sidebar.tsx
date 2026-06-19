@@ -13,6 +13,7 @@ interface NavEntry {
 
 const NAV: NavEntry[] = [
   { route: { name: "dashboard" }, label: "Projects", icon: "dashboard", match: ["dashboard", "new-project", "editor", "publish"] },
+  { route: { name: "archive" }, label: "Archive", icon: "archive", match: ["archive"] },
   { route: { name: "settings" }, label: "Settings", icon: "settings", match: ["settings"] },
 ];
 
@@ -21,7 +22,7 @@ export function Sidebar() {
   const navigate = useAppStore((s) => s.navigate);
   const projects = useAppStore((s) => s.projects);
 
-  const recent = projects.slice(0, 4);
+  const recent = projects.filter((p) => !p.archived).slice(0, 4);
 
   return (
     <nav className="sidebar">
@@ -42,16 +43,23 @@ export function Sidebar() {
       </Button>
 
       <div className="nav" style={{ marginTop: "var(--sp-3)" }}>
-        {NAV.map((entry) => (
-          <button
-            key={entry.label}
-            className={`navItem ${entry.match.includes(route.name) ? "active" : ""}`}
-            onClick={() => navigate(entry.route)}
-          >
-            <Icon name={entry.icon} size={17} />
-            {entry.label}
-          </button>
-        ))}
+        {NAV.map((entry) => {
+          const count =
+            entry.label === "Archive"
+              ? projects.filter((p) => p.archived).length
+              : 0;
+          return (
+            <button
+              key={entry.label}
+              className={`navItem ${entry.match.includes(route.name) ? "active" : ""}`}
+              onClick={() => navigate(entry.route)}
+            >
+              <Icon name={entry.icon} size={17} />
+              <span className="navLabel">{entry.label}</span>
+              {count > 0 && <span className="navBadge">{count}</span>}
+            </button>
+          );
+        })}
 
         {recent.length > 0 && (
           <>

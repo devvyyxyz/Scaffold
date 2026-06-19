@@ -14,6 +14,7 @@ import {
   ThemePref,
 } from "./types";
 import { isTauri, isOnboardingWindow, showOnboardingWindow } from "./ipc";
+import { purgeExpiredArchives } from "./projects";
 
 const STORE_FILE = "settings.json";
 
@@ -98,6 +99,11 @@ export const useAppStore = create<AppState>((set, get) => ({
   async init() {
     const settings = await loadSettings();
     applyTheme(settings.theme);
+
+    // Purge archived projects older than the retention window before the
+    // dashboard renders. Best-effort; never blocks startup.
+    await purgeExpiredArchives();
+
     const needsOnboarding = !settings.onboarded;
     const onboardingWin = isOnboardingWindow();
 

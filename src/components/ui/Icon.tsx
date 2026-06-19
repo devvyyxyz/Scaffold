@@ -5,6 +5,7 @@
 import { CSSProperties, ReactElement } from "react";
 
 export type IconName =
+  | "archive"
   | "dashboard"
   | "plus"
   | "editor"
@@ -28,7 +29,8 @@ export type IconName =
   | "code"
   | "eye"
   | "layers"
-  | "sparkles";
+  | "sparkles"
+  | "trash";
 
 interface IconProps {
   name: IconName;
@@ -38,6 +40,13 @@ interface IconProps {
 }
 
 const PATHS: Record<IconName, JSX.Element> = {
+  archive: (
+    <>
+      <rect x="2" y="4" width="20" height="5" rx="1" />
+      <path d="M4 9v10a1 1 0 0 0 1 1h14a1 1 0 0 0 1-1V9" />
+      <line x1="10" y1="13" x2="14" y2="13" />
+    </>
+  ),
   dashboard: (
     <>
       <rect x="3" y="3" width="7" height="9" rx="1" />
@@ -144,6 +153,15 @@ const PATHS: Record<IconName, JSX.Element> = {
   ),
   sparkles: (
     <path d="M12 3v4M12 17v4M3 12h4M17 12h4M5.6 5.6l2.8 2.8M15.6 15.6l2.8 2.8M18.4 5.6l-2.8 2.8M8.4 15.6l-2.8 2.8" />
+  ),
+  trash: (
+    <>
+      <path d="M3 6h18" />
+      <path d="M8 6V4a1 1 0 0 1 1-1h6a1 1 0 0 1 1 1v2" />
+      <path d="M19 6l-1 14a1 1 0 0 1-1 1H7a1 1 0 0 1-1-1L5 6" />
+      <line x1="10" y1="11" x2="10" y2="17" />
+      <line x1="14" y1="11" x2="14" y2="17" />
+    </>
   ),
 };
 

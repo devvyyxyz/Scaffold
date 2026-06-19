@@ -3,7 +3,7 @@
 // Default project dir resolution: we prefer the OS "Documents" area. In the
 // browser (no Tauri) we fall back to a fake path so the UI remains demoable.
 
-import { homeDir, join } from "@tauri-apps/api/path";
+import { dirname, homeDir, join } from "@tauri-apps/api/path";
 import { isTauri } from "./ipc";
 
 /** Default location for new Scaffold projects. */
@@ -11,6 +11,14 @@ export async function defaultProjectDir(): Promise<string> {
   if (!isTauri()) return "/tmp/Scaffold-projects";
   const home = await homeDir();
   return await join(home, "Documents", "Scaffold-projects");
+}
+
+/** Archive root — a sibling of the default project dir, so moves stay same-volume. */
+export async function archiveDir(): Promise<string> {
+  if (!isTauri()) return "/tmp/Scaffold-archive";
+  const projects = await defaultProjectDir();
+  const parent = await dirname(projects);
+  return await join(parent, "Scaffold-archive");
 }
 
 /** Join path segments portably across OS path separators. */

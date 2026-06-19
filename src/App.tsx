@@ -9,6 +9,7 @@ import { NewProjectWizard } from "./screens/NewProjectWizard";
 import { Editor } from "./screens/Editor";
 import { Publish } from "./screens/Publish";
 import { Settings } from "./screens/Settings";
+import { Archive } from "./screens/Archive";
 
 export default function App() {
   const ready = useAppStore((s) => s.ready);
@@ -55,6 +56,8 @@ function renderRoute(route: ReturnType<typeof useAppStore.getState>["route"]) {
       return <Editor projectId={route.projectId} />;
     case "publish":
       return <Publish projectId={route.projectId} />;
+    case "archive":
+      return <Archive />;
     case "settings":
       return <Settings />;
     default:

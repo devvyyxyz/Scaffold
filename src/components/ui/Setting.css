@@ -1,0 +1,96 @@
+/* ---- Setting section ---- */
+.settingSection {
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-4);
+}
+.settingSection + .settingSection {
+  margin-top: var(--sp-8);
+}
+.settingSectionHeader {
+  display: flex;
+  align-items: center;
+  gap: var(--sp-2);
+  padding-bottom: var(--sp-2);
+  border-bottom: 1px solid var(--border-subtle);
+}
+.settingSectionIcon {
+  color: var(--fg-muted);
+  flex-shrink: 0;
+}
+.settingSectionTitle {
+  font-size: var(--fs-base);
+  font-weight: var(--fw-semibold);
+  color: var(--fg-primary);
+  margin: 0;
+}
+.settingSectionCaption {
+  font-size: var(--fs-xs);
+  color: var(--fg-muted);
+  margin-left: var(--sp-2);
+}
+.settingSectionBody {
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-3);
+}
+
+/* ---- Setting row ---- */
+.settingRow {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: var(--sp-5);
+  padding: var(--sp-3) var(--sp-4);
+  background: var(--bg-surface);
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-md);
+  transition: border-color var(--dur-fast) var(--ease-out);
+}
+.settingRow:hover {
+  border-color: var(--border-default);
+}
+.settingRow.comingSoon {
+  opacity: 0.6;
+}
+.settingRowText {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  min-width: 0;
+  flex: 1;
+}
+.settingRowTitleLine {
+  display: flex;
+  align-items: center;
+  gap: var(--sp-2);
+}
+.settingRowTitle {
+  font-size: var(--fs-sm);
+  font-weight: var(--fw-medium);
+  color: var(--fg-primary);
+}
+.settingRowDesc {
+  font-size: var(--fs-xs);
+  color: var(--fg-muted);
+  line-height: 1.4;
+  margin: 0;
+}
+.settingRowControl {
+  flex-shrink: 0;
+  display: flex;
+  align-items: center;
+  min-height: 32px;
+}
+.comingSoonTag {
+  display: inline-flex;
+  align-items: center;
+  padding: 1px var(--sp-2);
+  border-radius: var(--radius-full);
+  background: var(--bg-sunken);
+  color: var(--fg-muted);
+  font-size: 10px;
+  font-weight: var(--fw-bold);
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}

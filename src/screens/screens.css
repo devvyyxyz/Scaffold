@@ -594,11 +594,33 @@
 }
 
 /* ---- Settings ---- */
-.settingsLayout {
+.settingsScreen {
+  /* Override default .screen flex/padding; the body handles layout. */
+  padding: 0;
+  gap: 0;
+}
+.settingsBody {
   display: grid;
-  grid-template-columns: 180px 1fr;
+  grid-template-columns: 200px 1fr;
   gap: var(--sp-8);
-  max-width: 880px;
+  height: 100%;
+  padding: var(--sp-6);
+  max-width: 920px;
+}
+
+/* ---- Category nav panel ---- */
+.settingsNavPanel {
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-2);
+}
+.settingsNavHeader {
+  font-size: var(--fs-xs);
+  font-weight: var(--fw-semibold);
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  color: var(--fg-muted);
+  padding: 0 var(--sp-3) var(--sp-1);
 }
 .settingsNav {
   display: flex;
@@ -608,13 +630,24 @@
 .settingsNavItem {
   display: flex;
   align-items: center;
-  height: 32px;
+  justify-content: space-between;
+  gap: var(--sp-2);
+  height: 34px;
   padding: 0 var(--sp-3);
   border-radius: var(--radius-md);
   font-size: var(--fs-sm);
   color: var(--fg-secondary);
   cursor: pointer;
   text-align: left;
+  transition: background var(--dur-fast) var(--ease-out),
+    color var(--dur-fast) var(--ease-out);
+}
+.settingsNavLabel {
+  flex: 1;
+}
+.settingsNavChevron {
+  color: var(--accent);
+  flex-shrink: 0;
 }
 .settingsNavItem:hover {
   background: var(--bg-hover);
@@ -625,11 +658,55 @@
   color: var(--accent);
   font-weight: var(--fw-medium);
 }
-.settingsSection {
+
+/* ---- Content area ---- */
+.settingsContent {
   display: flex;
   flex-direction: column;
-  gap: var(--sp-5);
+  min-width: 0;
+  overflow-y: auto;
 }
+.settingsPageHeader {
+  margin-bottom: var(--sp-6);
+}
+.settingsPageTitle {
+  font-size: 1.5rem; /* display size */
+  font-weight: var(--fw-bold);
+  letter-spacing: -0.02em;
+  color: var(--fg-primary);
+}
+.settingsPageDesc {
+  font-size: var(--fs-sm);
+  color: var(--fg-secondary);
+  margin-top: var(--sp-1);
+}
+.settingsRows {
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-6);
+}
+
+/* ---- Setting row control helpers ---- */
+.rowInputWithButton {
+  display: flex;
+  align-items: center;
+  gap: var(--sp-2);
+  min-width: 240px;
+}
+.rowInputWithButton .control {
+  flex: 1;
+}
+.colorSwatch {
+  width: 32px;
+  height: 32px;
+  padding: 0;
+  border: 1px solid var(--border-default);
+  border-radius: var(--radius-md);
+  cursor: pointer;
+  background: none;
+  flex-shrink: 0;
+}
+
 
 /* ---- Publish targets ---- */
 .deployGrid {

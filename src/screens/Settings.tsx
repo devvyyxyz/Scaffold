@@ -5,14 +5,17 @@ import { useAppStore } from "../lib/store";
 import { isTauri } from "../lib/ipc";
 import { AppSettings, ThemePref, AutoSaveInterval, CanvasZoom } from "../lib/types";
 import { Button } from "../components/ui/Button";
-import { Field, Segmented, Select } from "../components/ui/Field";
+import { Select } from "../components/ui/Field";
+import { Segmented } from "../components/ui/Field";
 import { Icon, IconName } from "../components/ui/Icon";
 import { Logo } from "../components/ui/Logo";
+import { Toggle } from "../components/ui/Toggle";
+import { SettingSection, SettingRow } from "../components/ui/Setting";
 import "./screens.css";
 
 type Section = "general" | "appearance" | "editor" | "export" | "runtime" | "updates" | "itchio" | "developer" | "about";
 
-const BASE_SECTIONS: { id: Section; label: string; icon: IconName }[] = [
+const SECTIONS: { id: Section; label: string; icon: IconName }[] = [
   { id: "general", label: "General", icon: "settings" },
   { id: "appearance", label: "Appearance", icon: "sun" },
   { id: "editor", label: "Editor", icon: "code" },
@@ -29,12 +32,27 @@ const DEV_SECTION: { id: Section; label: string; icon: IconName } = {
   icon: "settings",
 };
 
+const SECTION_DESC: Partial<Record<Section, string>> = {
+  general: "Core workspace preferences and application behaviour.",
+  appearance: "Theme and visual preferences. Changes apply instantly.",
+  editor: "Canvas defaults and editing behaviour.",
+  export: "How generated code is written out.",
+  runtime: "The bundled build runtime.",
+  updates: "Application version and update checks.",
+  itchio: "Links to your public product pages.",
+  developer: "Debugging tools. Changes take effect on next launch.",
+  about: "About Scaffold.",
+};
+
 export function Settings() {
   const [section, setSection] = useState<Section>("general");
   const settings = useAppStore((s) => s.settings);
   const setTheme = useAppStore((s) => s.setTheme);
   const setDefaultProjectDir = useAppStore((s) => s.setDefaultProjectDir);
   const resetOnboarding = useAppStore((s) => s.resetOnboarding);
+
+  const set = <K extends keyof AppSettings>(key: K, value: AppSettings[K]) =>
+    useAppStore.setState((s) => ({ settings: { ...s.settings, [key]: value } }));
 
   async function pickDefaultDir() {
     if (!isTauri()) return;
@@ -46,9 +64,7 @@ export function Settings() {
     if (!isTauri()) return;
     const selected = await openDialog({ directory: true, multiple: false });
     if (typeof selected === "string") {
-      useAppStore.setState((s) => ({
-        settings: { ...s.settings, exportOutputDir: selected },
-      }));
+      set("exportOutputDir", selected);
     }
   }
 
@@ -59,491 +75,380 @@ export function Settings() {
     if (confirmed) resetOnboarding();
   }
 
+  const navItems = settings.developerMode ? [...SECTIONS, DEV_SECTION] : SECTIONS;
+  const activeLabel = navItems.find((s) => s.id === section)?.label ?? "Settings";
+
   return (
-    <div className="screen">
-      <div className="screenHeader">
-        <div>
-          <h1 className="screenTitle">Settings</h1>
-          <p className="screenSub">App-wide preferences.</p>
-        </div>
-      </div>
+    <div className="screen settingsScreen">
+      <div className="settingsBody">
+        {/* ---- Category nav ---- */}
+        <aside className="settingsNavPanel">
+          <div className="settingsNavHeader">Settings menu</div>
+          <nav className="settingsNav">
+            {navItems.map((s) => (
+              <button
+                key={s.id}
+                className={`settingsNavItem ${section === s.id ? "active" : ""}`}
+                onClick={() => setSection(s.id)}
+              >
+                <span className="settingsNavLabel">{s.label}</span>
+                {section === s.id && <Icon name="chevron-right" size={16} className="settingsNavChevron" />}
+              </button>
+            ))}
+          </nav>
+        </aside>
 
-      <div className="settingsLayout">
-        <nav className="settingsNav">
-          {BASE_SECTIONS.map((s) => (
-            <button
-              key={s.id}
-              className={`settingsNavItem ${section === s.id ? "active" : ""}`}
-              onClick={() => setSection(s.id)}
-            >
-              <Icon name={s.icon} size={15} style={{ marginRight: 8 }} />
-              {s.label}
-            </button>
-          ))}
-          {settings.developerMode && (
-            <button
-              className={`settingsNavItem ${section === DEV_SECTION.id ? "active" : ""}`}
-              onClick={() => setSection(DEV_SECTION.id)}
-            >
-              <Icon name={DEV_SECTION.icon} size={15} style={{ marginRight: 8 }} />
-              {DEV_SECTION.label}
-            </button>
-          )}
-        </nav>
+        {/* ---- Active section ---- */}
+        <section className="settingsContent">
+          <header className="settingsPageHeader">
+            <h1 className="settingsPageTitle">{activeLabel}</h1>
+            {SECTION_DESC[section] && (
+              <p className="settingsPageDesc">{SECTION_DESC[section]}</p>
+            )}
+          </header>
 
-        <div className="settingsSection">
-          {section === "general" && (
-            <>
-              <Field label="Default project location">
-                <div className="inputRow">
-                  <input className="control" value={settings.defaultProjectDir ?? "—"} readOnly />
-                  <Button icon="folder-open" onClick={pickDefaultDir}>Change</Button>
-                </div>
-              </Field>
-              <Field label="Default stack">
-                <Select
-                  value={settings.defaultStack}
-                  onChange={(e) => useAppStore.setState((s) => ({
-                    settings: { ...s.settings, defaultStack: e.target.value as never },
-                  }))}
-                >
-                  <option value="vite">Vite</option>
-                  <option value="next">Next.js</option>
-                  <option value="remix">Remix</option>
-                  <option value="plain">Plain HTML</option>
-                </Select>
-              </Field>
-              <Field label="Language">
-                <Select
-                  value={settings.language}
-                  onChange={(e) => useAppStore.setState((s) => ({
-                    settings: { ...s.settings, language: e.target.value },
-                  }))}
-                >
-                  <option value="en">English</option>
-                </Select>
-              </Field>
+          <div className="settingsRows">
+            {section === "general" && (
+              <>
+                <SettingSection title="Workspace" icon="folder-open">
+                  <SettingRow title="Default project location" desc="Where new Scaffold projects are created and saved.">
+                    <div className="rowInputWithButton">
+                      <input className="control mono" value={settings.defaultProjectDir ?? "—"} readOnly />
+                      <Button size="sm" icon="folder-open" onClick={pickDefaultDir}>Change</Button>
+                    </div>
+                  </SettingRow>
+                  <SettingRow title="Default stack" desc="Framework used when scaffolding a new project.">
+                    <Select
+                      value={settings.defaultStack}
+                      onChange={(e) => set("defaultStack", e.target.value as never)}
+                    >
+                      <option value="vite">Vite</option>
+                      <option value="next">Next.js</option>
+                      <option value="remix">Remix</option>
+                      <option value="plain">Plain HTML</option>
+                    </Select>
+                  </SettingRow>
+                  <SettingRow title="Language" desc="Interface language.">
+                    <Select value={settings.language} onChange={(e) => set("language", e.target.value)}>
+                      <option value="en">English</option>
+                    </Select>
+                  </SettingRow>
+                </SettingSection>
 
-              <Field label="Page title prefix" hint="Prepended to page titles, e.g. 'Scaffold — About'.">
-                <input
-                  className="control"
-                  value={settings.pageTitlePrefix}
-                  onChange={(e) => useAppStore.setState((s) => ({
-                    settings: { ...s.settings, pageTitlePrefix: e.target.value },
-                  }))}
-                  placeholder="Scaffold — "
-                />
-              </Field>
+                <SettingSection title="Pages" icon="code">
+                  <SettingRow title="Page title prefix" desc="Prepended to page titles, e.g. 'Scaffold — About'.">
+                    <input
+                      className="control"
+                      value={settings.pageTitlePrefix}
+                      onChange={(e) => set("pageTitlePrefix", e.target.value)}
+                      placeholder="Scaffold — "
+                    />
+                  </SettingRow>
+                  <SettingRow title="Default meta description" desc="Template for new page meta descriptions. Use {{page}} for the page title.">
+                    <input
+                      className="control"
+                      value={settings.metaDescriptionTemplate}
+                      onChange={(e) => set("metaDescriptionTemplate", e.target.value)}
+                      placeholder="{{page}} — Built with Scaffold"
+                    />
+                  </SettingRow>
+                </SettingSection>
 
-              <Field label="Default meta description" hint="Template used for new page meta descriptions. Use {{page}} for the page title.">
-                <input
-                  className="control"
-                  value={settings.metaDescriptionTemplate}
-                  onChange={(e) => useAppStore.setState((s) => ({
-                    settings: { ...s.settings, metaDescriptionTemplate: e.target.value },
-                  }))}
-                  placeholder="{{page}} — Built with Scaffold"
-                />
-              </Field>
+                <SettingSection title="Saving" icon="check">
+                  <SettingRow title="Auto-save" desc="Automatically save editor changes at this interval.">
+                    <Select
+                      value={settings.autoSaveInterval}
+                      onChange={(e) => set("autoSaveInterval", Number(e.target.value) as AutoSaveInterval)}
+                    >
+                      <option value={0}>Off</option>
+                      <option value={30}>Every 30s</option>
+                      <option value={60}>Every 1m</option>
+                      <option value={120}>Every 2m</option>
+                      <option value={300}>Every 5m</option>
+                    </Select>
+                  </SettingRow>
+                  <SettingRow title="Show welcome screen" desc="Show the getting-started screen when the app launches.">
+                    <Toggle
+                      checked={settings.showWelcomeScreen}
+                      onChange={(v) => set("showWelcomeScreen", v)}
+                      label="Show welcome screen"
+                    />
+                  </SettingRow>
+                </SettingSection>
 
-              <Field label="Auto-save" hint="Automatically save editor changes at this interval.">
-                <Select
-                  value={settings.autoSaveInterval}
-                  onChange={(e) => useAppStore.setState((s) => ({
-                    settings: { ...s.settings, autoSaveInterval: Number(e.target.value) as AutoSaveInterval },
-                  }))}
-                >
-                  <option value={0}>Off</option>
-                  <option value={30}>Every 30 seconds</option>
-                  <option value={60}>Every 1 minute</option>
-                  <option value={120}>Every 2 minutes</option>
-                  <option value={300}>Every 5 minutes</option>
-                </Select>
-              </Field>
+                <SettingSection title="Experimental" icon="sparkles">
+                  <SettingRow title="Developer mode" desc="Unlock the Developer tab with debugging tools and advanced options.">
+                    <Toggle
+                      checked={settings.developerMode}
+                      onChange={(v) => set("developerMode", v)}
+                      label="Developer mode"
+                    />
+                  </SettingRow>
+                </SettingSection>
 
-              <Field label="Show welcome screen" hint="Show the getting-started screen when the app launches.">
-                <Segmented
-                  value={settings.showWelcomeScreen ? "on" : "off"}
-                  onChange={(v) => useAppStore.setState((s) => ({
-                    settings: { ...s.settings, showWelcomeScreen: v === "on" },
-                  }))}
-                  options={[
-                    { value: "on", label: "On" },
-                    { value: "off", label: "Off" },
-                  ]}
-                />
-              </Field>
+                <SettingSection title="Danger zone" icon="trash">
+                  <SettingRow title="Restart onboarding" desc="Walk through the setup wizard again. Some settings may be reset to defaults.">
+                    <Button variant="danger" size="sm" icon="settings" onClick={handleRestartOnboarding}>
+                      Restart
+                    </Button>
+                  </SettingRow>
+                </SettingSection>
+              </>
+            )}
 
-              <div className="dangerZone">
-                <div className="dangerZoneTitle">Danger zone</div>
-                <Button variant="danger" size="sm" icon="settings" onClick={handleRestartOnboarding}>
-                  Restart onboarding
-                </Button>
-                <p className="hint" style={{ marginTop: "var(--sp-1)" }}>
-                  Walk through the setup wizard again. Some settings may be reset to defaults.
-                </p>
-              </div>
-
-              <div style={{ borderTop: "1px solid var(--border)", paddingTop: "var(--sp-4)", marginTop: "var(--sp-4)" }}>
-                <div className="cardTitle" style={{ marginBottom: "var(--sp-3)" }}>Experimental</div>
-                <Field label="Developer mode" hint="Unlock the Developer tab with debugging tools and advanced options.">
-                  <Segmented
-                    value={settings.developerMode ? "on" : "off"}
-                    onChange={(v) => useAppStore.setState((s) => ({
-                      settings: { ...s.settings, developerMode: v === "on" },
-                    }))}
+            {section === "appearance" && (
+              <SettingSection title="Theme" icon="sun">
+                <SettingRow title="Theme" desc="Changes apply instantly across the app.">
+                  <Segmented<ThemePref>
+                    value={settings.theme}
+                    onChange={setTheme}
                     options={[
-                      { value: "on", label: "On" },
-                      { value: "off", label: "Off" },
+                      { value: "light", label: "Light", icon: <Icon name="sun" size={14} /> },
+                      { value: "dark", label: "Dark", icon: <Icon name="moon" size={14} /> },
+                      { value: "system", label: "System", icon: <Icon name="monitor" size={14} /> },
                     ]}
                   />
-                </Field>
-                <p className="hint" style={{ marginTop: "var(--sp-1)" }}>
-                  When enabled, a Developer tab appears in the settings sidebar.
+                </SettingRow>
+              </SettingSection>
+            )}
+
+            {section === "editor" && (
+              <SettingSection title="Canvas" icon="code">
+                <SettingRow title="Canvas zoom" desc="Default zoom level when opening the editor.">
+                  <Select
+                    value={settings.canvasZoom}
+                    onChange={(e) => set("canvasZoom", e.target.value as CanvasZoom)}
+                  >
+                    <option value="fit">Fit to screen</option>
+                    <option value="75">75%</option>
+                    <option value="100">100%</option>
+                    <option value="125">125%</option>
+                    <option value="150">150%</option>
+                  </Select>
+                </SettingRow>
+                <SettingRow title="Snap to grid" desc="Align dragged blocks to a grid on the canvas.">
+                  <Toggle checked={settings.snapToGrid} onChange={(v) => set("snapToGrid", v)} label="Snap to grid" />
+                </SettingRow>
+                <SettingRow title="Component outlines" desc="Show thin borders around components on the canvas.">
+                  <Toggle checked={settings.showComponentOutlines} onChange={(v) => set("showComponentOutlines", v)} label="Component outlines" />
+                </SettingRow>
+                <SettingRow title="Accent colour" desc="Default accent colour applied to generated sites.">
+                  <div className="rowInputWithButton">
+                    <input
+                      type="color"
+                      value={settings.accentColour}
+                      onChange={(e) => set("accentColour", e.target.value)}
+                      className="colorSwatch"
+                    />
+                    <input
+                      className="control mono"
+                      value={settings.accentColour}
+                      onChange={(e) => set("accentColour", e.target.value)}
+                      style={{ flex: 1 }}
+                    />
+                  </div>
+                </SettingRow>
+                <SettingRow title="Animations" desc="Enable CSS transitions and animations in the live preview.">
+                  <Toggle checked={settings.enableAnimations} onChange={(v) => set("enableAnimations", v)} label="Animations" />
+                </SettingRow>
+              </SettingSection>
+            )}
+
+            {section === "export" && (
+              <SettingSection title="Export" icon="publish">
+                <SettingRow title="Output format" desc="Clean produces readable code; minified strips whitespace and comments.">
+                  <Segmented
+                    value={settings.exportFormat}
+                    onChange={(v) => set("exportFormat", v as "clean" | "minified")}
+                    options={[
+                      { value: "clean", label: "Clean" },
+                      { value: "minified", label: "Minified" },
+                    ]}
+                  />
+                </SettingRow>
+                <SettingRow title="Include source maps" desc="Generate .map files alongside the output for debugging.">
+                  <Toggle checked={settings.includeSourceMaps} onChange={(v) => set("includeSourceMaps", v)} label="Include source maps" />
+                </SettingRow>
+                <SettingRow title="Output directory" desc="Custom directory for exported builds. Leave empty to use the project default.">
+                  <div className="rowInputWithButton">
+                    <input className="control mono" value={settings.exportOutputDir ?? ""} readOnly placeholder="Project default" />
+                    <Button size="sm" icon="folder-open" onClick={pickExportDir}>Change</Button>
+                  </div>
+                </SettingRow>
+                <SettingRow title="Auto-open after export" desc="Open the generated site in your default browser when export finishes.">
+                  <Toggle checked={settings.autoOpenAfterExport} onChange={(v) => set("autoOpenAfterExport", v)} label="Auto-open after export" />
+                </SettingRow>
+              </SettingSection>
+            )}
+
+            {section === "runtime" && (
+              <SettingSection title="Bundled runtime" icon="code">
+                <SettingRow title="Status">
+                  <span style={{ color: "var(--success)", fontSize: "var(--fs-sm)" }}>● Ready</span>
+                </SettingRow>
+                <SettingRow title="Node version" desc="The bundled Node/Bun runtime version.">
+                  <span className="mono" style={{ fontSize: "var(--fs-sm)" }}>not bundled yet</span>
+                </SettingRow>
+                <SettingRow title="Cache size">
+                  <span className="mono" style={{ fontSize: "var(--fs-sm)" }}>—</span>
+                </SettingRow>
+                <SettingRow title="Clear cache" desc="Remove cached build artifacts.">
+                  <Button variant="ghost" size="sm" icon="check" disabled>Clear cache</Button>
+                </SettingRow>
+                <p className="hint" style={{ marginTop: "var(--sp-2)" }}>
+                  The bundled Node/Bun runtime for scaffolding target projects ships in a later phase.
                 </p>
-              </div>
-            </>
-          )}
+              </SettingSection>
+            )}
 
-          {section === "appearance" && (
-            <>
-              <Field label="Theme" hint="Changes apply instantly across the app.">
-                <Segmented<ThemePref>
-                  value={settings.theme}
-                  onChange={setTheme}
-                  options={[
-                    { value: "light", label: "Light", icon: <Icon name="sun" size={14} /> },
-                    { value: "dark", label: "Dark", icon: <Icon name="moon" size={14} /> },
-                    { value: "system", label: "System", icon: <Icon name="monitor" size={14} /> },
-                  ]}
-                />
-              </Field>
-            </>
-          )}
+            {section === "updates" && (
+              <SettingSection title="Updates" icon="publish">
+                <SettingRow title="Version">
+                  <span className="mono" style={{ fontSize: "var(--fs-sm)" }}>
+                    v{import.meta.env.VITE_APP_VERSION || "0.0.0"}
+                  </span>
+                </SettingRow>
+                <SettingRow title="Check for updates" desc="Look for a newer version of Scaffold.">
+                  <Button variant="secondary" size="sm" icon="check" onClick={() => checkForUpdates()}>
+                    Check for updates
+                  </Button>
+                </SettingRow>
+                <p className="hint" style={{ marginTop: "var(--sp-2)" }}>
+                  Auto-update with signed deltas lands alongside first release builds.
+                </p>
+              </SettingSection>
+            )}
 
-          {section === "editor" && (
-            <>
-              <Field label="Canvas zoom" hint="Default zoom level when opening the editor.">
-                <Select
-                  value={settings.canvasZoom}
-                  onChange={(e) => useAppStore.setState((s) => ({
-                    settings: { ...s.settings, canvasZoom: e.target.value as CanvasZoom },
-                  }))}
-                >
-                  <option value="fit">Fit to screen</option>
-                  <option value="75">75%</option>
-                  <option value="100">100%</option>
-                  <option value="125">125%</option>
-                  <option value="150">150%</option>
-                </Select>
-              </Field>
+            {section === "itchio" && (
+              <SettingSection title="Product pages" icon="external">
+                <SettingRow title="Scaffold on itch.io" desc="Your public product page.">
+                  <Button
+                    variant="secondary"
+                    size="sm"
+                    icon="external"
+                    onClick={() => isTauri() && open("https://devvyyxyz.itch.io/scaffold")}
+                  >
+                    Open
+                  </Button>
+                </SettingRow>
+              </SettingSection>
+            )}
 
-              <Field label="Snap to grid" hint="Align dragged blocks to a grid on the canvas.">
-                <Segmented
-                  value={settings.snapToGrid ? "on" : "off"}
-                  onChange={(v) => useAppStore.setState((s) => ({
-                    settings: { ...s.settings, snapToGrid: v === "on" },
-                  }))}
-                  options={[
-                    { value: "on", label: "On" },
-                    { value: "off", label: "Off" },
-                  ]}
-                />
-              </Field>
+            {section === "developer" && (
+              <SettingSection title="Developer" icon="settings">
+                <SettingRow title="Verbose logging" desc="Enable debug-level logging in the browser console.">
+                  <Toggle checked={settings.verboseLogging} onChange={(v) => set("verboseLogging", v)} label="Verbose logging" />
+                </SettingRow>
+                <SettingRow title="Open DevTools on start" desc="Automatically open browser DevTools when the app launches.">
+                  <Toggle checked={settings.openDevToolsOnStart} onChange={(v) => set("openDevToolsOnStart", v)} label="Open DevTools on start" />
+                </SettingRow>
+                <SettingRow title="Backend log level" desc="Controls the verbosity of the Rust/Tauri backend logs.">
+                  <Select
+                    value={settings.backendLogLevel}
+                    onChange={(e) => set("backendLogLevel", e.target.value as AppSettings["backendLogLevel"])}
+                  >
+                    <option value="off">Off</option>
+                    <option value="error">Error</option>
+                    <option value="warn">Warn</option>
+                    <option value="info">Info</option>
+                    <option value="debug">Debug</option>
+                    <option value="trace">Trace</option>
+                  </Select>
+                </SettingRow>
+                <p className="hint" style={{ marginTop: "var(--sp-2)" }}>
+                  Developer settings are intended for debugging. Changes take effect on next app launch.
+                </p>
+              </SettingSection>
+            )}
 
-              <Field label="Component outlines" hint="Show thin borders around components on the canvas.">
-                <Segmented
-                  value={settings.showComponentOutlines ? "on" : "off"}
-                  onChange={(v) => useAppStore.setState((s) => ({
-                    settings: { ...s.settings, showComponentOutlines: v === "on" },
-                  }))}
-                  options={[
-                    { value: "on", label: "On" },
-                    { value: "off", label: "Off" },
-                  ]}
-                />
-              </Field>
-
-              <Field label="Accent colour" hint="Default accent colour applied to generated sites.">
-                <div className="inputRow">
-                  <input
-                    type="color"
-                    value={settings.accentColour}
-                    onChange={(e) => useAppStore.setState((s) => ({
-                      settings: { ...s.settings, accentColour: e.target.value },
-                    }))}
-                    style={{ width: 36, height: 32, padding: 0, border: "none", cursor: "pointer" }}
-                  />
-                  <input
-                    className="control"
-                    value={settings.accentColour}
-                    onChange={(e) => useAppStore.setState((s) => ({
-                      settings: { ...s.settings, accentColour: e.target.value },
-                    }))}
-                    style={{ flex: 1 }}
-                  />
-                </div>
-              </Field>
-
-              <Field label="Animations" hint="Enable CSS transitions and animations in the live preview.">
-                <Segmented
-                  value={settings.enableAnimations ? "on" : "off"}
-                  onChange={(v) => useAppStore.setState((s) => ({
-                    settings: { ...s.settings, enableAnimations: v === "on" },
-                  }))}
-                  options={[
-                    { value: "on", label: "On" },
-                    { value: "off", label: "Off" },
-                  ]}
-                />
-              </Field>
-            </>
-          )}
-
-          {section === "export" && (
-            <>
-              <Field label="Output format" hint="Clean produces readable code; minified strips whitespace and comments.">
-                <Segmented
-                  value={settings.exportFormat}
-                  onChange={(v) => useAppStore.setState((s) => ({
-                    settings: { ...s.settings, exportFormat: v as "clean" | "minified" },
-                  }))}
-                  options={[
-                    { value: "clean", label: "Clean" },
-                    { value: "minified", label: "Minified" },
-                  ]}
-                />
-              </Field>
-
-              <Field label="Include source maps" hint="Generate .map files alongside the output for debugging.">
-                <Segmented
-                  value={settings.includeSourceMaps ? "on" : "off"}
-                  onChange={(v) => useAppStore.setState((s) => ({
-                    settings: { ...s.settings, includeSourceMaps: v === "on" },
-                  }))}
-                  options={[
-                    { value: "on", label: "On" },
-                    { value: "off", label: "Off" },
-                  ]}
-                />
-              </Field>
-
-              <Field label="Output directory" hint="Custom directory for exported builds. Leave empty to use the project default.">
-                <div className="inputRow">
-                  <input
-                    className="control"
-                    value={settings.exportOutputDir ?? ""}
-                    readOnly
-                    placeholder="Project default"
-                  />
-                  <Button icon="folder-open" onClick={pickExportDir}>Change</Button>
-                </div>
-              </Field>
-
-              <Field label="Auto-open after export" hint="Open the generated site in your default browser when export finishes.">
-                <Segmented
-                  value={settings.autoOpenAfterExport ? "on" : "off"}
-                  onChange={(v) => useAppStore.setState((s) => ({
-                    settings: { ...s.settings, autoOpenAfterExport: v === "on" },
-                  }))}
-                  options={[
-                    { value: "on", label: "On" },
-                    { value: "off", label: "Off" },
-                  ]}
-                />
-              </Field>
-            </>
-          )}
-
-          {section === "runtime" && (
-            <>
-              <div className="card">
-                <div className="cardTitle">Bundled runtime</div>
-                <div className="stack-sm" style={{ fontSize: "var(--fs-sm)" }}>
-                  <div style={{ display: "flex", justifyContent: "space-between" }}>
-                    <span className="muted">Status</span>
-                    <span style={{ color: "var(--success)" }}>● Ready</span>
+            {section === "about" && (
+              <>
+                {/* ---- Hero header ---- */}
+                <div className="aboutHero">
+                  <div className="aboutHeroLogo">
+                    <Logo size={56} />
                   </div>
-                  <div style={{ display: "flex", justifyContent: "space-between" }}>
-                    <span className="muted">Node version</span>
-                    <span className="mono">not bundled yet</span>
-                  </div>
-                  <div style={{ display: "flex", justifyContent: "space-between" }}>
-                    <span className="muted">Cache size</span>
-                    <span className="mono">—</span>
+                  <div className="aboutHeroText">
+                    <div className="aboutHeroName">
+                      Scaffold
+                      <span className="aboutVersionPill">
+                        v{import.meta.env.VITE_APP_VERSION || "0.0.0"}
+                      </span>
+                    </div>
+                    <div className="aboutHeroTagline">
+                      Local-first visual React site builder.
+                    </div>
                   </div>
                 </div>
-                <div style={{ marginTop: "var(--sp-4)" }}>
-                  <Button variant="ghost" icon="check" disabled>Clear cache</Button>
-                </div>
-              </div>
-              <p className="hint">The bundled Node/Bun runtime for scaffolding target projects ships in a later phase.</p>
-            </>
-          )}
 
-          {section === "updates" && (
-            <>
-              <Field label="Auto-update">
-                <Button variant="secondary" icon="check" onClick={() => checkForUpdates()}>Check for updates</Button>
-              </Field>
-              <p className="hint">You're on v0.1.0. Auto-update with signed deltas lands alongside first release builds.</p>
-            </>
-          )}
-
-          {section === "itchio" && (
-            <div className="card">
-              <div className="cardTitle">Product pages</div>
-              <p className="hint" style={{ marginBottom: "var(--sp-3)" }}>
-                Links to your public product pages.
-              </p>
-              <div className="stack-sm" style={{ fontSize: "var(--fs-sm)" }}>
-                <button
-                  className="settingsNavItem"
-                  onClick={() => isTauri() && open("https://devvyyxyz.itch.io/scaffold")}
-                >
-                  <Icon name="external" size={15} style={{ marginRight: 8 }} /> Scaffold on itch.io
-                </button>
-              </div>
-            </div>
-          )}
-
-          {section === "developer" && (
-            <>
-              <Field label="Verbose logging" hint="Enable debug-level logging in the browser console.">
-                <Segmented
-                  value={settings.verboseLogging ? "on" : "off"}
-                  onChange={(v) => useAppStore.setState((s) => ({
-                    settings: { ...s.settings, verboseLogging: v === "on" },
-                  }))}
-                  options={[
-                    { value: "on", label: "On" },
-                    { value: "off", label: "Off" },
-                  ]}
-                />
-              </Field>
-
-              <Field label="Open DevTools on start" hint="Automatically open browser DevTools when the app launches.">
-                <Segmented
-                  value={settings.openDevToolsOnStart ? "on" : "off"}
-                  onChange={(v) => useAppStore.setState((s) => ({
-                    settings: { ...s.settings, openDevToolsOnStart: v === "on" },
-                  }))}
-                  options={[
-                    { value: "on", label: "On" },
-                    { value: "off", label: "Off" },
-                  ]}
-                />
-              </Field>
-
-              <Field label="Backend log level" hint="Controls the verbosity of the Rust/Tauri backend logs.">
-                <Select
-                  value={settings.backendLogLevel}
-                  onChange={(e) => useAppStore.setState((s) => ({
-                    settings: { ...s.settings, backendLogLevel: e.target.value as AppSettings["backendLogLevel"] },
-                  }))}
-                >
-                  <option value="off">Off</option>
-                  <option value="error">Error</option>
-                  <option value="warn">Warn</option>
-                  <option value="info">Info</option>
-                  <option value="debug">Debug</option>
-                  <option value="trace">Trace</option>
-                </Select>
-              </Field>
-
-              <p className="hint" style={{ marginTop: "var(--sp-2)" }}>
-                Developer settings are intended for debugging. Changes take effect on next app launch.
-              </p>
-            </>
-          )}
-
-          {section === "about" && (
-            <>
-              {/* ---- Hero header ---- */}
-              <div className="aboutHero">
-                <div className="aboutHeroLogo">
-                  <Logo size={56} />
-                </div>
-                <div className="aboutHeroText">
-                  <div className="aboutHeroName">
-                    Scaffold
-                    <span className="aboutVersionPill">
-                      v{import.meta.env.VITE_APP_VERSION || "0.0.0"}
+                {/* ---- Quick links ---- */}
+                <div className="aboutLinkGrid">
+                  <button
+                    className="aboutLinkCard"
+                    onClick={() => isTauri() && open("https://github.com/devvyyxyz/scaffold")}
+                  >
+                    <span className="aboutLinkIcon"><Icon name="github" size={18} /></span>
+                    <span className="aboutLinkBody">
+                      <span className="aboutLinkTitle">Source &amp; docs</span>
+                      <span className="aboutLinkDesc">View the source and read the docs on GitHub.</span>
                     </span>
-                  </div>
-                  <div className="aboutHeroTagline">
-                    Local-first visual React site builder.
-                  </div>
+                    <Icon name="chevron-right" size={16} className="aboutLinkChevron" />
+                  </button>
+
+                  <button
+                    className="aboutLinkCard"
+                    onClick={() => isTauri() && open("https://github.com/devvyyxyz/scaffold/issues")}
+                  >
+                    <span className="aboutLinkIcon"><Icon name="external" size={18} /></span>
+                    <span className="aboutLinkBody">
+                      <span className="aboutLinkTitle">Report an issue</span>
+                      <span className="aboutLinkDesc">Found a bug or have a feature request? Let us know.</span>
+                    </span>
+                    <Icon name="chevron-right" size={16} className="aboutLinkChevron" />
+                  </button>
+
+                  <button
+                    className="aboutLinkCard"
+                    onClick={() => {
+                      if (isTauri() && settings.defaultProjectDir) {
+                        Command.create("open", [settings.defaultProjectDir]).execute();
+                      }
+                    }}
+                  >
+                    <span className="aboutLinkIcon"><Icon name="folder-open" size={18} /></span>
+                    <span className="aboutLinkBody">
+                      <span className="aboutLinkTitle">Reveal project folder</span>
+                      <span className="aboutLinkDesc">Open your default project location in Finder.</span>
+                    </span>
+                    <Icon name="chevron-right" size={16} className="aboutLinkChevron" />
+                  </button>
                 </div>
-              </div>
 
-              {/* ---- Quick links ---- */}
-              <div className="aboutLinkGrid">
-                <button
-                  className="aboutLinkCard"
-                  onClick={() => isTauri() && open("https://github.com/devvyyxyz/scaffold")}
-                >
-                  <span className="aboutLinkIcon"><Icon name="github" size={18} /></span>
-                  <span className="aboutLinkBody">
-                    <span className="aboutLinkTitle">Source &amp; docs</span>
-                    <span className="aboutLinkDesc">View the source and read the docs on GitHub.</span>
-                  </span>
-                  <Icon name="chevron-right" size={16} className="aboutLinkChevron" />
-                </button>
-
-                <button
-                  className="aboutLinkCard"
-                  onClick={() => isTauri() && open("https://github.com/devvyyxyz/scaffold/issues")}
-                >
-                  <span className="aboutLinkIcon"><Icon name="external" size={18} /></span>
-                  <span className="aboutLinkBody">
-                    <span className="aboutLinkTitle">Report an issue</span>
-                    <span className="aboutLinkDesc">Found a bug or have a feature request? Let us know.</span>
-                  </span>
-                  <Icon name="chevron-right" size={16} className="aboutLinkChevron" />
-                </button>
-
-                <button
-                  className="aboutLinkCard"
-                  onClick={() => {
-                    if (isTauri() && settings.defaultProjectDir) {
-                      Command.create("open", [settings.defaultProjectDir]).execute();
-                    }
-                  }}
-                >
-                  <span className="aboutLinkIcon"><Icon name="folder-open" size={18} /></span>
-                  <span className="aboutLinkBody">
-                    <span className="aboutLinkTitle">Reveal project folder</span>
-                    <span className="aboutLinkDesc">Open your default project location in Finder.</span>
-                  </span>
-                  <Icon name="chevron-right" size={16} className="aboutLinkChevron" />
-                </button>
-              </div>
-
-              {/* ---- Tech details ---- */}
-              <div className="card">
-                <div className="cardTitle">Details</div>
-                <div className="stack-sm" style={{ fontSize: "var(--fs-sm)" }}>
-                  <div className="aboutDetailRow">
-                    <span className="muted">Version</span>
-                    <span className="mono">{import.meta.env.VITE_APP_VERSION || "0.0.0"}</span>
+                {/* ---- Tech details ---- */}
+                <div className="card">
+                  <div className="cardTitle">Details</div>
+                  <div className="stack-sm" style={{ fontSize: "var(--fs-sm)" }}>
+                    <div className="aboutDetailRow">
+                      <span className="muted">Version</span>
+                      <span className="mono">{import.meta.env.VITE_APP_VERSION || "0.0.0"}</span>
+                    </div>
+                    <div className="aboutDetailRow">
+                      <span className="muted">Built with</span>
+                      <span>React, Tauri &amp; Zustand</span>
+                    </div>
+                    <div className="aboutDetailRow">
+                      <span className="muted">Identifier</span>
+                      <span className="mono">app.scaffold.builder</span>
+                    </div>
                   </div>
-                  <div className="aboutDetailRow">
-                    <span className="muted">Built with</span>
-                    <span>React, Tauri &amp; Zustand</span>
-                  </div>
-                  <div className="aboutDetailRow">
-                    <span className="muted">Identifier</span>
-                    <span className="mono">app.scaffold.builder</span>
-                  </div>
+                  <p className="hint" style={{ marginTop: "var(--sp-3)" }}>
+                    Scaffold runs entirely on your machine. No accounts, no cloud sync — your projects and settings never leave this device.
+                  </p>
                 </div>
-                <p className="hint" style={{ marginTop: "var(--sp-3)" }}>
-                  Scaffold runs entirely on your machine. No accounts, no cloud sync — your projects and settings never leave this device.
-                </p>
-              </div>
-            </>
-          )}
-        </div>
+              </>
+            )}
+          </div>
+        </section>
       </div>
     </div>
   );

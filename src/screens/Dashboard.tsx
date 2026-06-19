@@ -1,8 +1,8 @@
 import { useEffect, useState } from "react";
 import { useAppStore } from "../lib/store";
 import {
+  ARCHIVE_RETENTION_DAYS,
   archiveProject,
-  deleteDaysLeft,
   listProjects,
   formatRelative,
 } from "../lib/projects";
@@ -129,7 +129,7 @@ function ProjectCard({
         message={
           <>
             It will be moved to the Archive and permanently deleted in{" "}
-            {deleteDaysLeft(Date.now())} days. You can restore it any time before then.
+            {ARCHIVE_RETENTION_DAYS} days. You can restore it any time before then.
           </>
         }
         confirmLabel="Archive"

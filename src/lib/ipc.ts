@@ -85,3 +85,9 @@ export async function fsRename(from: string, to: string): Promise<void> {
   if (!isTauri()) return;
   await invoke("scaffold_rename", { from, to });
 }
+
+/** Move a directory tree from `from` to `to` (rename with cross-volume fallback). */
+export async function fsMoveDir(from: string, to: string): Promise<void> {
+  if (!isTauri()) return;
+  await invoke("scaffold_move_dir", { from, to });
+}

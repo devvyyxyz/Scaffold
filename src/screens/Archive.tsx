@@ -18,7 +18,12 @@ import "./screens.css";
 export function Archive() {
   const navigate = useAppStore((s) => s.navigate);
   const setProjects = useAppStore((s) => s.setProjects);
-  const archived = useAppStore((s) => s.projects.filter((p) => p.archived));
+
+  // Read the stable projects reference, then filter in the render body.
+  // Filtering inside the selector would return a new array each render and
+  // crash React's useSyncExternalStore ("getSnapshot should be cached").
+  const projects = useAppStore((s) => s.projects);
+  const archived = projects.filter((p) => p.archived);
   const [dialog, setDialog] = useState<
     | { kind: "restore"; project: Project }
     | { kind: "delete"; project: Project }

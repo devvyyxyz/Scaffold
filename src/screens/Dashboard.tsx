@@ -19,7 +19,11 @@ export function Dashboard() {
   const setProjects = useAppStore((s) => s.setProjects);
   const settings = useAppStore((s) => s.settings);
 
-  const active = useAppStore((s) => s.projects.filter((p) => !p.archived));
+  // Read the stable projects reference, then filter in the render body.
+  // Filtering inside the selector would return a new array each render and
+  // crash React's useSyncExternalStore ("getSnapshot should be cached").
+  const projects = useAppStore((s) => s.projects);
+  const active = projects.filter((p) => !p.archived);
 
   const reload = () => {
     listProjects().then(setProjects);

@@ -35,6 +35,61 @@ fn scaffold_rename(from: String, to: String) -> Result<(), String> {
     fs::rename(&from, &to).map_err(|e| format!("rename failed: {e}"))
 }
 
+/// Move a directory tree from `from` to `to`.
+///
+/// Tries a fast `fs::rename`; if that fails (e.g. cross-device / different
+/// volume), falls back to a recursive copy + remove. This is necessary for
+/// the archive workflow because the archive dir may sit on a different mount.
+#[command]
+fn scaffold_move_dir(from: String, to: String) -> Result<(), String> {
+    let from_path = PathBuf::from(&from);
+    let to_path = PathBuf::from(&to);
+
+    // Try a fast, atomic rename first.
+    match fs::rename(&from_path, &to_path) {
+        Ok(()) => Ok(()),
+        Err(rename_err) => {
+            // Fallback: recursive copy then remove the source.
+            copy_dir_recursive(&from_path, &to_path)
+                .map_err(|e| format!("move copy fallback failed: {e}"))?;
+            fs::remove_dir_all(&from_path).map_err(|e| {
+                format!("move cleanup failed (rename was: {rename_err}): {e}")
+            })?;
+            Ok(())
+        }
+    }
+}
+
+/// Recursively copy a directory tree. Used as a cross-volume fallback by
+/// `scaffold_move_dir`. Creates `dest` and all intermediate dirs.
+fn copy_dir_recursive(src: &PathBuf, dest: &PathBuf) -> Result<(), String> {
+    fs::create_dir_all(dest).map_err(|e| format!("create_dir_all failed: {e}"))?;
+    for entry in fs::read_dir(src).map_err(|e| format!("read_dir failed: {e}"))? {
+        let entry = entry.map_err(|e| format!("readdir entry: {e}"))?;
+        let file_type = entry
+            .file_type()
+            .map_err(|e| format!("file_type failed: {e}"))?;
+        let from_child = entry.path();
+        let to_child = dest.join(entry.file_name());
+        if file_type.is_dir() {
+            copy_dir_recursive(&from_child, &to_child)?;
+        } else if file_type.is_symlink() {
+            let target = fs::read_link(&from_child)
+                .map_err(|e| format!("read_link failed: {e}"))?;
+            #[cfg(unix)]
+            std::os::unix::fs::symlink(&target, &to_child)
+                .map_err(|e| format!("symlink failed: {e}"))?;
+            #[cfg(not(unix))]
+            fs::copy(&from_child, &to_child)
+                .map_err(|e| format!("symlink fallback copy failed: {e}"))?;
+        } else {
+            fs::copy(&from_child, &to_child)
+                .map_err(|e| format!("copy failed: {e}"))?;
+        }
+    }
+    Ok(())
+}
+
 /// Write `contents` to a text file, creating parents as needed.
 #[command]
 fn scaffold_write_text_file(path: String, contents: String) -> Result<(), String> {
@@ -138,6 +193,7 @@ pub fn run() {
             scaffold_mkdir,
             scaffold_remove,
             scaffold_rename,
+            scaffold_move_dir,
             scaffold_write_text_file,
             scaffold_read_text_file,
             scaffold_exists,

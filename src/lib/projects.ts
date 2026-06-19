@@ -15,8 +15,10 @@ import {
   fsMkdir,
   fsReadTextFile,
   fsWriteTextFile,
+  fsRemove,
+  fsMoveDir,
 } from "./ipc";
-import { defaultProjectDir, joinPath } from "./paths";
+import { archiveDir, basename, defaultProjectDir, joinPath } from "./paths";
 import {
   Project,
   ProjectManifest,
@@ -28,6 +30,10 @@ const STORE_FILE = "settings.json";
 const REGISTRY_KEY = "projectRegistry";
 const MANIFEST_DIR = ".scaffold";
 const MANIFEST_FILE = "manifest.json";
+
+/** Archived projects older than this are purged on startup. */
+export const ARCHIVE_RETENTION_DAYS = 30;
+const ARCHIVE_RETENTION_MS = ARCHIVE_RETENTION_DAYS * 24 * 60 * 60 * 1000;
 
 /** Generate a short unique id without a uuid dep. */
 function uid(): string {
@@ -42,6 +48,29 @@ async function withStore<T>(
   if (!isTauri()) return null;
   const store = await load(STORE_FILE, { autoSave: false });
   return await fn(store);
+}
+
+/** Read the current project registry (empty if none / not Tauri). */
+async function readRegistry(): Promise<Project[]> {
+  const result = await withStore(async (store) => {
+    return (await store.get<Project[]>(REGISTRY_KEY)) ?? [];
+  });
+  return result ?? [];
+}
+
+/** Write the registry and persist. */
+async function writeRegistry(projects: Project[]): Promise<void> {
+  await withStore(async (store) => {
+    await store.set(REGISTRY_KEY, projects);
+    await store.save();
+  });
+}
+
+/** Sync parent-directory extraction from a path string. */
+function dirnameSafe(p: string): string | null {
+  const norm = p.replace(/\\/g, "/");
+  const idx = norm.lastIndexOf("/");
+  return idx > 0 ? norm.slice(0, idx) : null;
 }
 
 /** Scaffold boilerplate project files onto an already-created project folder. */
@@ -271,10 +300,7 @@ export async function readManifest(
 
 /** List all projects recorded in the registry. */
 export async function listProjects(): Promise<Project[]> {
-  const result = await withStore(async (store) => {
-    return (await store.get<Project[]>(REGISTRY_KEY)) ?? [];
-  });
-  return result ?? [];
+  return await readRegistry();
 }
 
 /** Add or replace a project in the registry. */
@@ -303,38 +329,128 @@ export async function unregisterProject(id: string): Promise<void> {
   });
 }
 
-/** Move a project to the archive (marks it archived in the registry). */
+/** Move a project's folder into the archive and mark it archived. */
 export async function archiveProject(id: string): Promise<void> {
-  await withStore(async (store) => {
-    const current = (await store.get<Project[]>(REGISTRY_KEY)) ?? [];
-    const updated = current.map((p) =>
-      p.id === id ? { ...p, archived: true, archivedAt: Date.now() } : p
-    );
-    await store.set(REGISTRY_KEY, updated);
-    await store.save();
-  });
+  if (!isTauri()) return;
+
+  const projects = await readRegistry();
+  const project = projects.find((p) => p.id === id);
+  if (!project) throw new Error(`Project not found: ${id}`);
+  if (project.archived) return; // already archived, no-op
+
+  const archiveRoot = await archiveDir();
+  await fsMkdir(archiveRoot);
+
+  // Destination folder name, with collision avoidance.
+  let destName = basename(project.path);
+  let destPath = await joinPath(archiveRoot, destName);
+  if (await fsExists(destPath)) {
+    destName = `${basename(project.path)}-${uid().slice(0, 6)}`;
+    destPath = await joinPath(archiveRoot, destName);
+  }
+
+  // Move the folder. If this throws, we leave the registry untouched
+  // so there is no data loss and no inconsistent state.
+  await fsMoveDir(project.path, destPath);
+
+  const updated = projects.map((p) =>
+    p.id === id
+      ? {
+          ...p,
+          archivedFrom: p.path,
+          path: destPath,
+          archived: true,
+          archivedAt: Date.now(),
+        }
+      : p
+  );
+  await writeRegistry(updated);
 }
 
-/** Restore an archived project back to active. */
+/** Restore an archived project: move the folder back to its original location. */
 export async function restoreProject(id: string): Promise<void> {
-  await withStore(async (store) => {
-    const current = (await store.get<Project[]>(REGISTRY_KEY)) ?? [];
-    const updated = current.map((p) =>
-      p.id === id ? { ...p, archived: false, archivedAt: undefined } : p
-    );
-    await store.set(REGISTRY_KEY, updated);
-    await store.save();
-  });
+  if (!isTauri()) return;
+
+  const projects = await readRegistry();
+  const project = projects.find((p) => p.id === id);
+  if (!project) throw new Error(`Project not found: ${id}`);
+  if (!project.archived) return; // not archived, no-op
+
+  // Prefer the recorded original location; fall back to default dir.
+  const baseDir = project.archivedFrom ?? (await defaultProjectDir());
+  const parent = dirnameSafe(baseDir) ?? (await defaultProjectDir());
+  await fsMkdir(parent);
+
+  let target = baseDir;
+  if (await fsExists(target)) {
+    // Slot was taken in the meantime; append a suffix.
+    target = await joinPath(parent, `${basename(baseDir)}-${uid().slice(0, 6)}`);
+  }
+
+  await fsMoveDir(project.path, target);
+
+  const updated = projects.map((p) =>
+    p.id === id
+      ? {
+          ...p,
+          path: target,
+          archived: false,
+          archivedAt: undefined,
+          archivedFrom: undefined,
+        }
+      : p
+  );
+  await writeRegistry(updated);
 }
 
-/** Permanently delete an archived project from the registry. */
+/** Permanently delete an archived project: remove its files + registry entry. */
 export async function permanentlyDeleteProject(id: string): Promise<void> {
-  await withStore(async (store) => {
-    const current = (await store.get<Project[]>(REGISTRY_KEY)) ?? [];
-    const updated = current.filter((p) => p.id !== id);
-    await store.set(REGISTRY_KEY, updated);
-    await store.save();
-  });
+  const projects = await readRegistry();
+  const project = projects.find((p) => p.id === id);
+  if (!project) return;
+
+  // Best-effort filesystem removal; the registry is the source of truth,
+  // so a missing folder must not trap the user.
+  if (isTauri()) {
+    try {
+      await fsRemove(project.path);
+    } catch {
+      // ignore — folder may already be gone
+    }
+  }
+
+  await writeRegistry(projects.filter((p) => p.id !== id));
+}
+
+/** Permanently delete archived projects older than the retention window.
+ *  Called once on startup. Never throws. Returns the count purged. */
+export async function purgeExpiredArchives(): Promise<number> {
+  if (!isTauri()) return 0;
+  try {
+    const projects = await readRegistry();
+    const now = Date.now();
+    const expired = projects.filter(
+      (p) =>
+        p.archived === true &&
+        typeof p.archivedAt === "number" &&
+        now - p.archivedAt > ARCHIVE_RETENTION_MS
+    );
+    if (expired.length === 0) return 0;
+
+    for (const p of expired) {
+      try {
+        await fsRemove(p.path);
+      } catch {
+        // ignore — folder may already be gone
+      }
+    }
+
+    const expiredIds = new Set(expired.map((p) => p.id));
+    await writeRegistry(projects.filter((p) => !expiredIds.has(p.id)));
+    return expired.length;
+  } catch {
+    return 0; // never break startup
+  }
 }
 
 function sanitizeFolderName(name: string): string {
@@ -358,6 +474,13 @@ export function formatRelative(ts: number | null): string {
   const day = Math.floor(hr / 24);
   if (day < 30) return `${day}d ago`;
   return new Date(ts).toLocaleDateString();
+}
+
+/** Whole days remaining before an archived project is auto-deleted (min 0). */
+export function deleteDaysLeft(archivedAt: number | undefined): number | null {
+  if (typeof archivedAt !== "number") return null;
+  const msLeft = ARCHIVE_RETENTION_MS - (Date.now() - archivedAt);
+  return Math.max(0, Math.ceil(msLeft / (24 * 60 * 60 * 1000)));
 }
 
 export { defaultProjectDir };

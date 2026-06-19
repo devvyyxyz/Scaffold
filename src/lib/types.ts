@@ -19,6 +19,8 @@ export interface Project {
   updatedAt: number;
   /** ISO timestamp of last edit in the builder; null until first save. */
   lastEditedAt: number | null;
+  /** Optional banner image URL for the dashboard card (e.g. "/Scaffold/banner.png"). Defaults to the bundled banner. */
+  bannerPath?: string;
   /** Whether the project is archived (moved to archive folder). */
   archived?: boolean;
   /** When the project was archived. */

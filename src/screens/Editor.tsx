@@ -1,9 +1,14 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { useAppStore } from "../lib/store";
 import { Icon, IconName } from "../components/ui/Icon";
 import { Segmented } from "../components/ui/Field";
 import { EmptyState } from "../components/EmptyState";
 import { Button } from "../components/ui/Button";
+import {
+  loadProject,
+  recoverProject,
+  type ProjectLoadResult,
+} from "../lib/projects";
 import "./screens.css";
 
 // ---------------------------------------------------------------------------
@@ -172,17 +177,50 @@ function makeId(): string {
 // ---------------------------------------------------------------------------
 
 export function Editor({ projectId }: { projectId: string }) {
-  const projects = useAppStore((s) => s.projects);
   const navigate = useAppStore((s) => s.navigate);
-  const [device, setDevice] = useState<Device>("desktop");
 
-  // Canvas state
+  // ---- async load state ----
+  // phase: "loading" (reading manifest) | "ready" (open it) | "error" (missing/corrupt)
+  // loadResult null + phase "loading" && notFound false → still working.
+  const [phase, setPhase] = useState<"loading" | "ready" | "error">("loading");
+  const [notFound, setNotFound] = useState(false);
+  const [loadResult, setLoadResult] = useState<ProjectLoadResult | null>(null);
+  const [repairing, setRepairing] = useState(false);
+  const [repairError, setRepairError] = useState<string | null>(null);
+
+  // Canvas + selection state — declared unconditionally (hooks rules).
+  const [device, setDevice] = useState<Device>("desktop");
   const [canvas, setCanvas] = useState<CanvasComponent[]>([]);
   const [selectedId, setSelectedId] = useState<string | null>(null);
 
-  const project = projects.find((p) => p.id === projectId);
+  useEffect(() => {
+    let cancelled = false;
+    setPhase("loading");
+    setNotFound(false);
+    setLoadResult(null);
+    setRepairError(null);
+    loadProject(projectId)
+      .then((result) => {
+        if (cancelled) return;
+        if (result === null) {
+          setNotFound(true);
+          return;
+        }
+        setLoadResult(result);
+        setPhase(result.status === "ok" ? "ready" : "error");
+      })
+      .catch(() => {
+        if (cancelled) return;
+        // Unexpected registry failure — treat as not found rather than crash.
+        setNotFound(true);
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, [projectId]);
 
-  if (!project) {
+  // Not in the registry at all.
+  if (notFound) {
     return (
       <div className="screen">
         <EmptyState
@@ -191,6 +229,65 @@ export function Editor({ projectId }: { projectId: string }) {
           desc="This project may have been moved or removed from the registry."
           actions={<Button variant="primary" onClick={() => navigate({ name: "dashboard" })}>Back to projects</Button>}
         />
+      </div>
+    );
+  }
+
+  // Loading the manifest.
+  if (phase === "loading") {
+    return (
+      <div className="screen editorLoading">
+        <div className="editorSpinner" aria-hidden="true" />
+        <div className="editorLoadingLabel">Loading project…</div>
+      </div>
+    );
+  }
+
+  // Manifest missing or corrupt — recovery screen.
+  if (phase === "error" && loadResult) {
+    const reason =
+      loadResult.status === "missing"
+        ? "This project's manifest is missing — its files may have been moved or deleted outside Scaffold."
+        : "This project's manifest is unreadable or corrupt.";
+    const handleRepair = async () => {
+      setRepairing(true);
+      setRepairError(null);
+      try {
+        await recoverProject(projectId);
+        // Reload to confirm the recovery worked.
+        const result = await loadProject(projectId);
+        if (result && result.status === "ok") {
+          setLoadResult(result);
+          setPhase("ready");
+        } else {
+          setRepairError("Repair wrote files but the project still won't load. Check the project folder on disk.");
+        }
+      } catch (e) {
+        setRepairError(e instanceof Error ? e.message : String(e));
+      } finally {
+        setRepairing(false);
+      }
+    };
+    return (
+      <div className="screen">
+        <EmptyState
+          icon="close"
+          title="This project can't be opened"
+          desc={reason}
+          actions={
+            <>
+              <Button variant="primary" icon="check" onClick={handleRepair} disabled={repairing}>
+                {repairing ? "Repairing…" : "Repair project"}
+              </Button>
+              <Button variant="ghost" onClick={() => navigate({ name: "dashboard" })} disabled={repairing}>
+                Back to projects
+              </Button>
+            </>
+          }
+        />
+        {repairError && (
+          <div className="editorRepairError">{repairError}</div>
+        )}
       </div>
     );
   }

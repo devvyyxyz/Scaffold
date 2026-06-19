@@ -17,7 +17,8 @@ export async function defaultProjectDir(): Promise<string> {
 export async function archiveDir(): Promise<string> {
   if (!isTauri()) return "/tmp/Scaffold-archive";
   const projects = await defaultProjectDir();
-  return await join(dirname(projects), "Scaffold-archive");
+  const parent = await dirname(projects);
+  return await join(parent, "Scaffold-archive");
 }
 
 /** Join path segments portably across OS path separators. */

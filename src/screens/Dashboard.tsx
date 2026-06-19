@@ -1,22 +1,34 @@
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 import { useAppStore } from "../lib/store";
-import { listProjects, formatRelative } from "../lib/projects";
+import {
+  archiveProject,
+  deleteDaysLeft,
+  listProjects,
+  formatRelative,
+} from "../lib/projects";
 import { basename } from "../lib/paths";
 import { EmptyState } from "../components/EmptyState";
 import { Button } from "../components/ui/Button";
 import { Icon } from "../components/ui/Icon";
+import { ConfirmDialog } from "../components/ui/ConfirmDialog";
 import { Project, ProjectStack, ProjectTemplate } from "../lib/types";
 import "./screens.css";
 
 export function Dashboard() {
   const navigate = useAppStore((s) => s.navigate);
-  const projects = useAppStore((s) => s.projects);
   const setProjects = useAppStore((s) => s.setProjects);
   const settings = useAppStore((s) => s.settings);
 
-  useEffect(() => {
+  const active = useAppStore((s) => s.projects.filter((p) => !p.archived));
+
+  const reload = () => {
     listProjects().then(setProjects);
-  }, [setProjects]);
+  };
+
+  useEffect(() => {
+    reload();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   return (
     <div className="screen">
@@ -24,8 +36,8 @@ export function Dashboard() {
         <div>
           <h1 className="screenTitle">Projects</h1>
           <p className="screenSub">
-            {projects.length > 0
-              ? `${projects.length} project${projects.length === 1 ? "" : "s"}`
+            {active.length > 0
+              ? `${active.length} project${active.length === 1 ? "" : "s"}`
               : "Create your first visual React site."}
           </p>
         </div>
@@ -34,7 +46,7 @@ export function Dashboard() {
         </Button>
       </div>
 
-      {projects.length === 0 ? (
+      {active.length === 0 ? (
         <EmptyState
           icon="sparkles"
           title="No projects yet"
@@ -47,8 +59,13 @@ export function Dashboard() {
         />
       ) : (
         <div className="projectGrid">
-          {projects.map((p) => (
-            <ProjectCard key={p.id} project={p} onOpen={() => navigate({ name: "editor", projectId: p.id })} />
+          {active.map((p) => (
+            <ProjectCard
+              key={p.id}
+              project={p}
+              onOpen={() => navigate({ name: "editor", projectId: p.id })}
+              onChanged={reload}
+            />
           ))}
         </div>
       )}
@@ -63,26 +80,63 @@ export function Dashboard() {
   );
 }
 
-function ProjectCard({ project, onOpen }: { project: Project; onOpen: () => void }) {
+function ProjectCard({
+  project,
+  onOpen,
+  onChanged,
+}: {
+  project: Project;
+  onOpen: () => void;
+  onChanged: () => void;
+}) {
+  const [confirming, setConfirming] = useState(false);
+
+  const handleArchive = async () => {
+    await archiveProject(project.id);
+    setConfirming(false);
+    onChanged();
+  };
+
   return (
-    <div className="projectCard" onClick={onOpen}>
-      <div className="projectThumb">
+    <div className="projectCard">
+      <div className="projectThumb" onClick={onOpen}>
         <Icon name="layers" size={36} />
       </div>
-      <div className="projectBody"><span className="projectName">{project.name}</span><br/>
-      <span className="stackBadge">{project.stack}</span>
-      <Button variant="ghost" size="sm" icon="close" className="float-right"
-              onClick={() => {
-                // Remove the project
-                Scaffold.store.removeProject(project.id);
-              }}
-      >Action</Button></div>
+      <div className="projectBody">
+        <span className="projectName" onClick={onOpen}>{project.name}</span>
+        <div className="projectMeta">
+          <span className="stackBadge">{project.stack}</span>
           <span>{formatRelative(project.lastEditedAt ?? project.updatedAt)}</span>
         </div>
-        <span className="faint mono" style={{ fontSize: 11, marginTop: 2 }} title={project.path}>
+        <span className="faint mono projectPath" title={project.path}>
           {basename(project.path)}
         </span>
+        <div className="projectActions">
+          <Button
+            variant="ghost"
+            size="sm"
+            icon="archive"
+            onClick={() => setConfirming(true)}
+          >
+            Archive
+          </Button>
+        </div>
       </div>
+
+      <ConfirmDialog
+        open={confirming}
+        title={`Archive "${project.name}"?`}
+        message={
+          <>
+            It will be moved to the Archive and permanently deleted in{" "}
+            {deleteDaysLeft(Date.now())} days. You can restore it any time before then.
+          </>
+        }
+        confirmLabel="Archive"
+        tone="default"
+        onConfirm={handleArchive}
+        onCancel={() => setConfirming(false)}
+      />
     </div>
   );
 }

@@ -104,7 +104,15 @@ function ProjectCard({
   return (
     <div className="projectCard">
       <div className="projectThumb" onClick={onOpen}>
-        <Icon name="layers" size={36} />
+        <img
+          src={project.bannerPath || "/Scaffold/banner.png"}
+          alt=""
+          onError={(e) => {
+            // If the banner image fails to load, hide the img so the
+            // gradient background shows through instead of a broken icon.
+            (e.currentTarget as HTMLImageElement).style.display = "none";
+          }}
+        />
       </div>
       <div className="projectBody">
         <span className="projectName" onClick={onOpen}>{project.name}</span>

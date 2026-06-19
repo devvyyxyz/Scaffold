@@ -298,6 +298,33 @@ export async function readManifest(
   }
 }
 
+/** Write the manifest into a project folder, creating the .scaffold dir. */
+async function writeManifest(
+  projectPath: string,
+  manifest: ProjectManifest
+): Promise<void> {
+  if (!isTauri()) return;
+  const manifestDir = await joinPath(projectPath, MANIFEST_DIR);
+  await fsMkdir(manifestDir);
+  const manifestPath = await joinPath(manifestDir, MANIFEST_FILE);
+  await fsWriteTextFile(manifestPath, JSON.stringify(manifest, null, 2));
+}
+
+/** Build a fresh manifest from a registry Project (used on create + recover). */
+function freshManifest(project: Project): ProjectManifest {
+  const now = Date.now();
+  return {
+    schemaVersion: 1,
+    id: project.id,
+    name: project.name,
+    stack: project.stack,
+    template: project.template,
+    createdAt: project.createdAt || now,
+    updatedAt: now,
+    pages: [],
+  };
+}
+
 /** List all projects recorded in the registry. */
 export async function listProjects(): Promise<Project[]> {
   return await readRegistry();
@@ -451,6 +478,75 @@ export async function purgeExpiredArchives(): Promise<number> {
   } catch {
     return 0; // never break startup
   }
+}
+
+// ---------------------------------------------------------------------------
+// Project loading + recovery
+// ---------------------------------------------------------------------------
+
+/** Outcome of loading a project's on-disk data. */
+export type ProjectLoadResult =
+  | { status: "ok"; project: Project; manifest: ProjectManifest }
+  | { status: "missing"; project: Project } // manifest file absent
+  | { status: "corrupt"; project: Project }; // manifest present but unreadable
+
+/** Load a project from the registry and validate its on-disk manifest.
+ *  Returns `null` if the project is not in the registry at all. Never throws
+ *  for manifest problems (those become a status). */
+export async function loadProject(
+  projectId: string
+): Promise<ProjectLoadResult | null> {
+  const projects = await readRegistry();
+  const project = projects.find((p) => p.id === projectId);
+  if (!project) return null;
+
+  if (!isTauri()) {
+    // Browser/demo mode: treat in-memory project as healthy.
+    return { status: "ok", project, manifest: freshManifest(project) };
+  }
+
+  const manifestPath = await joinPath(project.path, MANIFEST_DIR, MANIFEST_FILE);
+  if (!(await fsExists(manifestPath))) {
+    return { status: "missing", project };
+  }
+
+  let manifest: ProjectManifest;
+  try {
+    const raw = await fsReadTextFile(manifestPath);
+    manifest = JSON.parse(raw) as ProjectManifest;
+  } catch {
+    return { status: "corrupt", project };
+  }
+
+  // Shape sanity check: a usable manifest must identify itself.
+  if (typeof manifest.id !== "string" || typeof manifest.name !== "string") {
+    return { status: "corrupt", project };
+  }
+
+  return { status: "ok", project, manifest };
+}
+
+/** Re-scaffold a project's boilerplate files, preserving the manifest where
+ *  possible. Returns the recovered manifest. Throws if the project isn't in
+ *  the registry or if scaffolding itself fails. */
+export async function recoverProject(
+  projectId: string
+): Promise<ProjectManifest> {
+  const projects = await readRegistry();
+  const project = projects.find((p) => p.id === projectId);
+  if (!project) throw new Error(`Project not found: ${projectId}`);
+
+  // Re-write the boilerplate files (package.json, index.html, src/*, ...).
+  await scaffoldProjectFiles(project);
+
+  // Preserve the existing manifest where we can; fall back to a fresh one.
+  const existing = await readManifest(project.path);
+  const manifest: ProjectManifest = existing
+    ? { ...existing, updatedAt: Date.now() }
+    : freshManifest(project);
+
+  await writeManifest(project.path, manifest);
+  return manifest;
 }
 
 function sanitizeFolderName(name: string): string {

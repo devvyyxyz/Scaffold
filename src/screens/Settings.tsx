@@ -459,57 +459,88 @@ export function Settings() {
 
           {section === "about" && (
             <>
-              <div className="card">
-                <div style={{ display: "flex", alignItems: "center", gap: "var(--sp-3)", marginBottom: "var(--sp-4)" }}>
-                  <div className="brandMark" style={{ width: 40, height: 40 }}>
-                    <Logo size={22} />
+              {/* ---- Hero header ---- */}
+              <div className="aboutHero">
+                <div className="aboutHeroLogo">
+                  <Logo size={56} />
+                </div>
+                <div className="aboutHeroText">
+                  <div className="aboutHeroName">
+                    Scaffold
+                    <span className="aboutVersionPill">
+                      v{import.meta.env.VITE_APP_VERSION || "0.0.0"}
+                    </span>
                   </div>
-                  <div>
-                    <div style={{ fontWeight: "var(--fw-semibold)" }}>Scaffold</div>
-                    <div className="faint" style={{ fontSize: "var(--fs-xs)" }}>Version 0.1.0</div>
+                  <div className="aboutHeroTagline">
+                    Local-first visual React site builder.
                   </div>
                 </div>
-                <div className="stack-sm" style={{ fontSize: "var(--fs-sm)" }}>
-                <button className="settingsNavItem" onClick={() => isTauri() && open("https://github.com/devvyyxyz/scaffold")}>
-                  <Icon name="github" size={15} style={{ marginRight: 8 }} /> Source & docs
-                </button>
-                <button className="settingsNavItem" onClick={() => isTauri() && open("https://github.com/devvyyxyz/scaffold/issues")}>
-                  <Icon name="external" size={15} style={{ marginRight: 8 }} /> Report an issue
-                </button>
+              </div>
+
+              {/* ---- Quick links ---- */}
+              <div className="aboutLinkGrid">
                 <button
-                  className="settingsNavItem"
+                  className="aboutLinkCard"
+                  onClick={() => isTauri() && open("https://github.com/devvyyxyz/scaffold")}
+                >
+                  <span className="aboutLinkIcon"><Icon name="github" size={18} /></span>
+                  <span className="aboutLinkBody">
+                    <span className="aboutLinkTitle">Source &amp; docs</span>
+                    <span className="aboutLinkDesc">View the source and read the docs on GitHub.</span>
+                  </span>
+                  <Icon name="chevron-right" size={16} className="aboutLinkChevron" />
+                </button>
+
+                <button
+                  className="aboutLinkCard"
+                  onClick={() => isTauri() && open("https://github.com/devvyyxyz/scaffold/issues")}
+                >
+                  <span className="aboutLinkIcon"><Icon name="external" size={18} /></span>
+                  <span className="aboutLinkBody">
+                    <span className="aboutLinkTitle">Report an issue</span>
+                    <span className="aboutLinkDesc">Found a bug or have a feature request? Let us know.</span>
+                  </span>
+                  <Icon name="chevron-right" size={16} className="aboutLinkChevron" />
+                </button>
+
+                <button
+                  className="aboutLinkCard"
                   onClick={() => {
                     if (isTauri() && settings.defaultProjectDir) {
                       Command.create("open", [settings.defaultProjectDir]).execute();
                     }
                   }}
                 >
-                  <Icon name="folder-open" size={15} style={{ marginRight: 8 }} /> Reveal project folder
+                  <span className="aboutLinkIcon"><Icon name="folder-open" size={18} /></span>
+                  <span className="aboutLinkBody">
+                    <span className="aboutLinkTitle">Reveal project folder</span>
+                    <span className="aboutLinkDesc">Open your default project location in Finder.</span>
+                  </span>
+                  <Icon name="chevron-right" size={16} className="aboutLinkChevron" />
                 </button>
-                </div>
               </div>
 
-              <Field label="Tagline">
-                <div className="control" style={{ padding: "var(--sp-2) var(--sp-3)", fontSize: "var(--fs-sm)" }}>
-                  {settings.itchTagline}
+              {/* ---- Tech details ---- */}
+              <div className="card">
+                <div className="cardTitle">Details</div>
+                <div className="stack-sm" style={{ fontSize: "var(--fs-sm)" }}>
+                  <div className="aboutDetailRow">
+                    <span className="muted">Version</span>
+                    <span className="mono">{import.meta.env.VITE_APP_VERSION || "0.0.0"}</span>
+                  </div>
+                  <div className="aboutDetailRow">
+                    <span className="muted">Built with</span>
+                    <span>React, Tauri &amp; Zustand</span>
+                  </div>
+                  <div className="aboutDetailRow">
+                    <span className="muted">Identifier</span>
+                    <span className="mono">app.scaffold.builder</span>
+                  </div>
                 </div>
-              </Field>
-              <Field label="Description">
-                <div
-                  className="control"
-                  style={{
-                    padding: "var(--sp-3)",
-                    fontSize: "var(--fs-sm)",
-                    lineHeight: 1.6,
-                    fontFamily: "var(--font-mono)",
-                    whiteSpace: "pre-wrap",
-                    maxHeight: 320,
-                    overflowY: "auto",
-                  }}
-                >
-                  {settings.itchDescription}
-                </div>
-              </Field>
+                <p className="hint" style={{ marginTop: "var(--sp-3)" }}>
+                  Scaffold runs entirely on your machine. No accounts, no cloud sync — your projects and settings never leave this device.
+                </p>
+              </div>
             </>
           )}
         </div>

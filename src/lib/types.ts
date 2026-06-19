@@ -87,6 +87,12 @@ export interface AppSettings {
   /** Show the welcome / getting-started screen on launch. */
   showWelcomeScreen: boolean;
 
+  // ── Layout ──
+  /** Sidebar width in px (clamped 200–400). */
+  sidebarWidth: number;
+  /** Whether the left sidebar is collapsed to an icon-only rail. */
+  sidebarCollapsed: boolean;
+
   // ── Editor ──
   /** Default zoom level for the canvas. */
   canvasZoom: CanvasZoom;
@@ -172,6 +178,9 @@ Made with care. Open source. Local first.`,
   metaDescriptionTemplate: "{{page}} — Built with Scaffold",
   autoSaveInterval: 60,
   showWelcomeScreen: true,
+  // ── Layout defaults ──
+  sidebarWidth: 240,
+  sidebarCollapsed: false,
   // ── Editor defaults ──
   canvasZoom: "fit",
   snapToGrid: true,

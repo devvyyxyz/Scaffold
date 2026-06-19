@@ -1,11 +1,12 @@
 .shell {
   display: grid;
-  grid-template-columns: var(--sidebar-width) 1fr;
+  /* The handle sits in its own 1px column between sidebar and content. */
+  grid-template-columns: var(--sidebar-col, 240px) 0px 1fr;
   grid-template-rows: var(--topbar-height) 1fr var(--statusbar-height);
   grid-template-areas:
-    "sidebar topbar"
-    "sidebar content"
-    "sidebar status";
+    "sidebar handle topbar"
+    "sidebar handle content"
+    "sidebar handle status";
   height: 100vh;
   overflow: hidden;
   user-select: none;
@@ -15,7 +16,45 @@
   grid-area: sidebar;
   border-right: 1px solid var(--border-subtle);
   background: var(--bg-surface);
+  overflow: hidden;
+  transition: width var(--dur-base) var(--ease-out);
 }
+/* Don't animate width while the user is dragging (feels laggy). */
+body.sidebar-resizing .sidebarArea {
+  transition: none;
+}
+
+.sidebarResizeHandle {
+  grid-area: handle;
+  position: relative;
+  width: 0;
+  cursor: col-resize;
+  z-index: 5;
+}
+/* Wider invisible hit area, with a visible hover line. */
+.sidebarResizeHandle::before {
+  content: "";
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  left: -4px;
+  width: 8px;
+}
+.sidebarResizeHandle::after {
+  content: "";
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  left: -1px;
+  width: 2px;
+  background: transparent;
+  transition: background var(--dur-fast) var(--ease-out);
+}
+.sidebarResizeHandle:hover::after,
+.sidebarResizeHandle:active::after {
+  background: var(--accent);
+}
+
 .topbarArea {
   grid-area: topbar;
   border-bottom: 1px solid var(--border-subtle);
@@ -33,4 +72,3 @@
   border-top: 1px solid var(--border-subtle);
   background: var(--bg-surface);
 }
-

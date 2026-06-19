@@ -18,6 +18,12 @@ import { purgeExpiredArchives } from "./projects";
 
 const STORE_FILE = "settings.json";
 
+/** Sidebar resize bounds (px). */
+export const SIDEBAR_MIN = 200;
+export const SIDEBAR_MAX = 400;
+/** Width used when the sidebar is collapsed (icon-only rail). */
+export const SIDEBAR_COLLAPSED_WIDTH = 64;
+
 /** Resolve a theme pref to the concrete theme to apply to <html>. */
 function resolveTheme(pref: ThemePref): "light" | "dark" {
   if (pref === "system") {
@@ -57,6 +63,8 @@ interface AppState {
   resetOnboarding: () => Promise<void>;
   setProjects: (projects: Project[]) => void;
   upsertProject: (project: Project) => void;
+  setSidebarWidth: (px: number) => Promise<void>;
+  toggleSidebar: () => Promise<void>;
 }
 
 async function readStore() {
@@ -183,6 +191,19 @@ export const useAppStore = create<AppState>((set, get) => ({
         ? existing.map((p) => (p.id === project.id ? project : p))
         : [project, ...existing];
     set({ projects: next });
+  },
+
+  async setSidebarWidth(px) {
+    const clamped = Math.max(SIDEBAR_MIN, Math.min(SIDEBAR_MAX, Math.round(px)));
+    const settings = { ...get().settings, sidebarWidth: clamped };
+    set({ settings });
+    await saveSettings(settings);
+  },
+
+  async toggleSidebar() {
+    const settings = { ...get().settings, sidebarCollapsed: !get().settings.sidebarCollapsed };
+    set({ settings });
+    await saveSettings(settings);
   },
 }));
 

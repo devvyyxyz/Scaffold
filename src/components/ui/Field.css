@@ -1,0 +1,121 @@
+.field {
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-2);
+}
+
+.label {
+  font-size: var(--fs-sm);
+  font-weight: var(--fw-medium);
+  color: var(--fg-secondary);
+}
+
+.hint {
+  font-size: var(--fs-xs);
+  color: var(--fg-muted);
+}
+
+.control {
+  height: 36px;
+  padding: 0 var(--sp-3);
+  background: var(--bg-surface);
+  border: 1px solid var(--border-default);
+  border-radius: var(--radius-md);
+  color: var(--fg-primary);
+  font-size: var(--fs-sm);
+  transition: border-color var(--dur-fast) var(--ease-out),
+    box-shadow var(--dur-fast) var(--ease-out);
+  width: 100%;
+}
+
+.control::placeholder {
+  color: var(--fg-muted);
+}
+
+.control:focus {
+  outline: none;
+  border-color: var(--accent);
+  box-shadow: 0 0 0 3px var(--accent-subtle);
+}
+
+.inputRow {
+  display: flex;
+  gap: var(--sp-2);
+}
+.inputRow .control {
+  flex: 1;
+}
+
+.select {
+  appearance: none;
+  background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='16' height='16' viewBox='0 0 24 24' fill='none' stroke='%2364748b' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'><path d='m6 9 6 6 6-6'/></svg>");
+  background-repeat: no-repeat;
+  background-position: right var(--sp-3) center;
+  padding-right: var(--sp-8);
+  cursor: pointer;
+}
+
+/* Segmented control for small choice sets (stack, theme, device). */
+.segmented {
+  display: inline-flex;
+  padding: var(--sp-1);
+  background: var(--bg-sunken);
+  border-radius: var(--radius-md);
+  gap: var(--sp-1);
+}
+.segment {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--sp-2);
+  height: 28px;
+  padding: 0 var(--sp-3);
+  border-radius: var(--radius-sm);
+  font-size: var(--fs-sm);
+  color: var(--fg-secondary);
+  transition: background var(--dur-fast) var(--ease-out),
+    color var(--dur-fast) var(--ease-out);
+}
+.segment:hover {
+  color: var(--fg-primary);
+}
+.segment.active {
+  background: var(--bg-surface);
+  color: var(--fg-primary);
+  box-shadow: var(--shadow-sm);
+}
+
+/* Option cards (stack/template pickers). */
+.optionGrid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(160px, 1fr));
+  gap: var(--sp-3);
+}
+.optionCard {
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-2);
+  padding: var(--sp-4);
+  background: var(--bg-surface);
+  border: 1px solid var(--border-default);
+  border-radius: var(--radius-lg);
+  text-align: left;
+  cursor: pointer;
+  transition: border-color var(--dur-fast) var(--ease-out),
+    box-shadow var(--dur-fast) var(--ease-out);
+}
+.optionCard:hover {
+  border-color: var(--accent);
+}
+.optionCard.selected {
+  border-color: var(--accent);
+  box-shadow: 0 0 0 1px var(--accent), 0 0 0 4px var(--accent-subtle);
+}
+.optionCardTitle {
+  font-size: var(--fs-sm);
+  font-weight: var(--fw-semibold);
+  color: var(--fg-primary);
+}
+.optionCardDesc {
+  font-size: var(--fs-xs);
+  color: var(--fg-muted);
+}

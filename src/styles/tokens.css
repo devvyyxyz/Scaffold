@@ -1,0 +1,149 @@
+/*
+ * Design tokens.
+ *
+ * Single source of truth for the app's visual language. Everything else
+ * consumes these via `var(--token)`. Two themes — light (default) and dark —
+ * are switched by setting `data-theme` on <html>. "System" is handled in JS
+ * by resolving prefers-color-scheme and writing the resolved value.
+ *
+ * Token naming: `--<role>-<property>` where role is semantic
+ * (bg, fg, border, accent, ...). Raw palette values live under `--color-*`
+ * so semantic tokens can reference them.
+ */
+
+:root {
+  /* ---- Raw palette ---- */
+  --color-indigo-50: #eef2ff;
+  --color-indigo-100: #e0e7ff;
+  --color-indigo-300: #a5b4fc;
+  --color-indigo-500: #6366f1;
+  --color-indigo-600: #4f46e5;
+  --color-indigo-700: #4338ca;
+
+  --color-slate-50: #f8fafc;
+  --color-slate-100: #f1f5f9;
+  --color-slate-200: #e2e8f0;
+  --color-slate-300: #cbd5e1;
+  --color-slate-400: #94a3b8;
+  --color-slate-500: #64748b;
+  --color-slate-600: #475569;
+  --color-slate-700: #334155;
+  --color-slate-800: #1e293b;
+  --color-slate-900: #0f172a;
+  --color-slate-950: #020617;
+
+  /* Status */
+  --color-green-500: #22c55e;
+  --color-amber-500: #f59e0b;
+  --color-red-500: #ef4444;
+
+  /* ---- Semantic: light theme (default) ---- */
+  --bg-app: var(--color-slate-50);
+  --bg-surface: #ffffff;
+  --bg-surface-raised: #ffffff;
+  --bg-sunken: var(--color-slate-100);
+  --bg-hover: var(--color-slate-100);
+  --bg-active: var(--color-slate-200);
+
+  --fg-primary: var(--color-slate-900);
+  --fg-secondary: var(--color-slate-600);
+  --fg-muted: var(--color-slate-400);
+  --fg-inverse: #ffffff;
+
+  --border-subtle: var(--color-slate-200);
+  --border-default: var(--color-slate-300);
+  --border-strong: var(--color-slate-400);
+
+  --accent: var(--color-indigo-600);
+  --accent-hover: var(--color-indigo-700);
+  --accent-fg: #ffffff;
+  --accent-subtle: var(--color-indigo-50);
+
+  --success: var(--color-green-500);
+  --warning: var(--color-amber-500);
+  --danger: var(--color-red-500);
+
+  /* ---- Typography ---- */
+  --font-sans: -apple-system, BlinkMacSystemFont, "Segoe UI", "Inter",
+    system-ui, sans-serif;
+  --font-mono: "SF Mono", "JetBrains Mono", "Fira Code", ui-monospace,
+    monospace;
+
+  --fs-xs: 0.75rem;   /* 12px */
+  --fs-sm: 0.875rem;  /* 14px */
+  --fs-base: 1rem;    /* 16px */
+  --fs-lg: 1.125rem;  /* 18px */
+  --fs-xl: 1.375rem;  /* 22px */
+  --fs-2xl: 1.75rem;  /* 28px */
+
+  --fw-regular: 400;
+  --fw-medium: 500;
+  --fw-semibold: 600;
+  --fw-bold: 700;
+
+  --lh-tight: 1.2;
+  --lh-base: 1.5;
+
+  /* ---- Spacing scale (4px base) ---- */
+  --sp-0: 0;
+  --sp-1: 0.25rem;  /* 4 */
+  --sp-2: 0.5rem;   /* 8 */
+  --sp-3: 0.75rem;  /* 12 */
+  --sp-4: 1rem;     /* 16 */
+  --sp-5: 1.25rem;  /* 20 */
+  --sp-6: 1.5rem;   /* 24 */
+  --sp-8: 2rem;     /* 32 */
+  --sp-10: 2.5rem;  /* 40 */
+  --sp-12: 3rem;    /* 48 */
+  --sp-16: 4rem;    /* 64 */
+
+  /* ---- Radii ---- */
+  --radius-sm: 4px;
+  --radius-md: 6px;
+  --radius-lg: 10px;
+  --radius-xl: 16px;
+  --radius-full: 9999px;
+
+  /* ---- Shadows ---- */
+  --shadow-sm: 0 1px 2px rgba(15, 23, 42, 0.05);
+  --shadow-md: 0 4px 12px rgba(15, 23, 42, 0.08);
+  --shadow-lg: 0 12px 32px rgba(15, 23, 42, 0.12);
+
+  /* ---- Layout metrics ---- */
+  --sidebar-width: 240px;
+  --topbar-height: 48px;
+  --statusbar-height: 28px;
+
+  /* ---- Motion ---- */
+  --ease-out: cubic-bezier(0.16, 1, 0.3, 1);
+  --dur-fast: 120ms;
+  --dur-base: 200ms;
+}
+
+/* ---- Dark theme ---- */
+[data-theme="dark"] {
+  --bg-app: var(--color-slate-950);
+  --bg-surface: var(--color-slate-900);
+  --bg-surface-raised: var(--color-slate-800);
+  --bg-sunken: var(--color-slate-900);
+  --bg-hover: var(--color-slate-800);
+  --bg-active: var(--color-slate-700);
+
+  --fg-primary: #f1f5f9;
+  --fg-secondary: var(--color-slate-400);
+  --fg-muted: var(--color-slate-600);
+  --fg-inverse: var(--color-slate-900);
+
+  --border-subtle: var(--color-slate-800);
+  --border-default: var(--color-slate-700);
+  --border-strong: var(--color-slate-600);
+
+  --accent: var(--color-indigo-500);
+  --accent-hover: var(--color-indigo-600);
+  --accent-fg: #ffffff;
+  --accent-subtle: var(--color-slate-800);
+
+  --shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.3);
+  --shadow-md: 0 4px 12px rgba(0, 0, 0, 0.4);
+  --shadow-lg: 0 12px 32px rgba(0, 0, 0, 0.5);
+}

@@ -1,0 +1,36 @@
+.shell {
+  display: grid;
+  grid-template-columns: var(--sidebar-width) 1fr;
+  grid-template-rows: var(--topbar-height) 1fr var(--statusbar-height);
+  grid-template-areas:
+    "sidebar topbar"
+    "sidebar content"
+    "sidebar status";
+  height: 100vh;
+  overflow: hidden;
+  user-select: none;
+}
+
+.sidebarArea {
+  grid-area: sidebar;
+  border-right: 1px solid var(--border-subtle);
+  background: var(--bg-surface);
+}
+.topbarArea {
+  grid-area: topbar;
+  border-bottom: 1px solid var(--border-subtle);
+  background: var(--bg-surface);
+}
+.contentArea {
+  grid-area: content;
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+  background: var(--bg-app);
+}
+.statusArea {
+  grid-area: status;
+  border-top: 1px solid var(--border-subtle);
+  background: var(--bg-surface);
+}
+

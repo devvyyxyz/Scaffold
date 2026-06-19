@@ -1,0 +1,81 @@
+/*
+ * Global utility classes shared across components.
+ * Component-scoped styles live next to each component; this file holds
+ * cross-cutting helpers and the scrollable/focus conventions.
+ */
+
+/* ---- Scrollbars (subtle, app-like) ---- */
+.scroll-y {
+  overflow-y: auto;
+  scrollbar-width: thin;
+  scrollbar-color: var(--border-default) transparent;
+}
+.scroll-y::-webkit-scrollbar {
+  width: 10px;
+}
+.scroll-y::-webkit-scrollbar-thumb {
+  background: var(--border-default);
+  border-radius: var(--radius-full);
+  border: 3px solid transparent;
+  background-clip: content-box;
+}
+.scroll-y::-webkit-scrollbar-thumb:hover {
+  background: var(--border-strong);
+  background-clip: content-box;
+}
+
+/* ---- Focus ring (keyboard only) ---- */
+:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 2px;
+  border-radius: var(--radius-sm);
+}
+
+/* ---- Selectable text region opt-in ---- */
+.selectable {
+  user-select: text;
+}
+
+/* ---- Screen-reader-only ---- */
+.sr-only {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border: 0;
+}
+
+/* ---- Stack helpers ---- */
+.stack {
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-4);
+}
+.stack-sm {
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-2);
+}
+.row {
+  display: flex;
+  align-items: center;
+  gap: var(--sp-2);
+}
+
+/* ---- Muted text ---- */
+.muted {
+  color: var(--fg-secondary);
+}
+.faint {
+  color: var(--fg-muted);
+}
+
+/* ---- Mono ---- */
+.mono {
+  font-family: var(--font-mono);
+  font-size: var(--fs-sm);
+}

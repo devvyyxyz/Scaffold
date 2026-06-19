@@ -1,0 +1,85 @@
+/*
+ * Minimal reset + sensible element defaults.
+ * Intentionally small — we don't fight the browser, just normalize.
+ */
+
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+}
+
+* {
+  margin: 0;
+}
+
+html {
+  height: 100%;
+  background: var(--bg-surface);
+}
+body,
+#root {
+  height: 100%;
+  background: var(--bg-surface);
+}
+
+body {
+  font-family: var(--font-sans);
+  font-size: var(--fs-base);
+  line-height: var(--lh-base);
+  color: var(--fg-primary);
+  background: var(--bg-surface);
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  text-rendering: optimizeLegibility;
+  /* Desktop app feel: no text selection by default unless opted in. */
+  user-select: none;
+}
+
+#root {
+  display: flex;
+  flex-direction: column;
+  background: var(--bg-surface);
+}
+
+h1, h2, h3, h4, h5, h6 {
+  font-weight: var(--fw-semibold);
+  line-height: var(--lh-tight);
+  color: var(--fg-primary);
+}
+
+a {
+  color: var(--accent);
+  text-decoration: none;
+}
+
+button {
+  font: inherit;
+  color: inherit;
+  background: none;
+  border: none;
+  cursor: pointer;
+  padding: 0;
+}
+
+input,
+select,
+textarea {
+  font: inherit;
+  color: inherit;
+}
+
+ul, ol {
+  list-style: none;
+  padding: 0;
+}
+
+/* Respect users who prefer reduced motion. */
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    transition-duration: 0.01ms !important;
+  }
+}

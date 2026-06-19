@@ -1,0 +1,23 @@
+# Dependencies
+node_modules/
+.pnpm-store/
+
+# Build output
+dist/
+dist-ssr/
+
+# Tauri build artifacts
+src-tauri/target/
+src-tauri/gen/schemas/
+
+# Local env
+.env
+.env.*
+!.env.example
+
+# Editor / OS
+.DS_Store
+*.log
+.vscode/*
+!.vscode/extensions.json
+.idea/

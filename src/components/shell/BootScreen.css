@@ -1,0 +1,73 @@
+/* Startup splash screen with brand logo, name, and progress bar */
+
+.boot {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  height: 100vh;
+  width: 100%;
+  background: var(--bg-surface);
+  gap: var(--sp-6);
+  transition: opacity 0.3s var(--ease-out), transform 0.4s var(--ease-out);
+}
+
+/* Entrance: scale up from slightly smaller + fade in */
+.boot.enter {
+  opacity: 0;
+  transform: scale(0.92);
+}
+.boot.visible {
+  opacity: 1;
+  transform: scale(1);
+}
+
+.bootBrand {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: var(--sp-4);
+}
+
+.bootLogo {
+  color: var(--accent);
+  filter: drop-shadow(0 2px 8px rgba(99, 102, 241, 0.3));
+}
+
+.bootName {
+  font-size: var(--fs-xl);
+  font-weight: var(--fw-bold);
+  color: var(--fg-primary);
+  letter-spacing: -0.02em;
+}
+
+/* Loading section: bar + status text */
+.bootLoad {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: var(--sp-2);
+}
+
+/* Progress bar */
+.bootBar {
+  width: 200px;
+  height: 4px;
+  border-radius: var(--radius-full);
+  background: var(--border-subtle);
+  overflow: hidden;
+}
+.bootBarFill {
+  height: 100%;
+  border-radius: var(--radius-full);
+  background: linear-gradient(90deg, var(--accent), var(--color-indigo-300));
+  transition: width 0.1s linear;
+}
+
+/* Status text under the bar */
+.bootStatus {
+  font-size: var(--fs-sm);
+  color: var(--fg-muted);
+  text-align: center;
+  min-width: 200px;
+}

@@ -1,0 +1,39 @@
+.emptyState {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+  gap: var(--sp-4);
+  padding: var(--sp-16) var(--sp-6);
+  max-width: 420px;
+  margin: 0 auto;
+}
+
+.iconWrap {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 64px;
+  height: 64px;
+  border-radius: var(--radius-xl);
+  background: var(--accent-subtle);
+  color: var(--accent);
+}
+
+.title {
+  font-size: var(--fs-lg);
+  font-weight: var(--fw-semibold);
+}
+
+.desc {
+  font-size: var(--fs-sm);
+  color: var(--fg-secondary);
+  line-height: var(--lh-base);
+}
+
+.actions {
+  display: flex;
+  gap: var(--sp-2);
+  margin-top: var(--sp-2);
+}

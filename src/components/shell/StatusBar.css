@@ -1,0 +1,28 @@
+.statusbar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  height: 100%;
+  padding: 0 var(--sp-4);
+  font-size: var(--fs-xs);
+  color: var(--fg-muted);
+}
+
+.group {
+  display: flex;
+  align-items: center;
+  gap: var(--sp-4);
+}
+
+.item {
+  display: flex;
+  align-items: center;
+  gap: var(--sp-1);
+}
+
+.statusDot {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: var(--success);
+}

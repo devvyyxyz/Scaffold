@@ -1,4 +1,5 @@
 import { useEffect, useRef, useState } from "react";
+import { Logo } from "../ui/Logo";
 import "./BootScreen.css";
 
 interface BootScreenProps {
@@ -95,21 +96,7 @@ export function BootScreen({ ready, onNext }: BootScreenProps) {
   return (
     <div className={`boot ${phase}`}>
       <div className="bootBrand">
-        <svg
-          className="bootLogo"
-          width="64"
-          height="64"
-          viewBox="0 0 24 24"
-          fill="none"
-          stroke="currentColor"
-          strokeWidth={1.75}
-          strokeLinecap="round"
-          strokeLinejoin="round"
-          aria-hidden="true"
-        >
-          <rect x="3" y="3" width="18" height="18" rx="5" />
-          <path d="M9 8h4a2.5 2.5 0 0 1 0 5H9m0 0h4.5a2.5 2.5 0 0 1 0 5H9" />
-        </svg>
+        <Logo size={64} className="bootLogo" />
         <span className="bootName">Scaffold</span>
       </div>
       <div className="bootLoad">

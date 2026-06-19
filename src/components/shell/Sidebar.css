@@ -19,9 +19,14 @@
   width: 28px;
   height: 28px;
   border-radius: var(--radius-md);
-  background: linear-gradient(135deg, var(--color-indigo-500), var(--color-indigo-700));
-  color: #fff;
+  overflow: hidden;
   flex-shrink: 0;
+}
+.brandMark img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
 }
 .brandName {
   font-size: var(--fs-base);

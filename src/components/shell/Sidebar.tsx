@@ -1,6 +1,7 @@
 import { useAppStore } from "../../lib/store";
 import { Route } from "../../lib/types";
 import { Icon, IconName } from "../ui/Icon";
+import { Logo } from "../ui/Logo";
 import { Button } from "../ui/Button";
 import "./Sidebar.css";
 
@@ -28,7 +29,7 @@ export function Sidebar() {
     <nav className="sidebar">
       <div className="brand">
         <div className="brandMark">
-          <Icon name="logo" size={16} />
+          <Logo size={16} />
         </div>
         <span className="brandName">Scaffold</span>
       </div>

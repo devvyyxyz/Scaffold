@@ -6,6 +6,7 @@ import { isTauri, isOnboardingWindow, closeOnboardingWindow } from "../lib/ipc";
 import { ThemePref, ProjectStack, ProjectTemplate, AutoSaveInterval, CanvasZoom, AppSettings } from "../lib/types";
 import { Button } from "../components/ui/Button";
 import { Icon, IconName } from "../components/ui/Icon";
+import { Logo } from "../components/ui/Logo";
 import { OptionCard, Field, Segmented, Select } from "../components/ui/Field";
 import { applyTheme } from "../lib/store";
 import "./screens.css";
@@ -119,7 +120,7 @@ export function Onboarding() {
       <div className="onboardingHeader">
         <div className="brand" style={{ justifyContent: "center" }}>
           <div className="brandMark" style={{ width: 36, height: 36 }}>
-            <Icon name="logo" size={20} />
+            <Logo size={20} />
           </div>
         </div>
         <h1 style={{ fontSize: "var(--fs-xl)", textAlign: "center" }}>Welcome to Scaffold</h1>

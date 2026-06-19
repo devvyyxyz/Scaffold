@@ -30,7 +30,7 @@
 }
 
 .bootLogo {
-  color: var(--accent);
+  display: block;
   filter: drop-shadow(0 2px 8px rgba(99, 102, 241, 0.3));
 }
 

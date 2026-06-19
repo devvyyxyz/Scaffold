@@ -7,6 +7,7 @@ import { AppSettings, ThemePref, AutoSaveInterval, CanvasZoom } from "../lib/typ
 import { Button } from "../components/ui/Button";
 import { Field, Segmented, Select } from "../components/ui/Field";
 import { Icon, IconName } from "../components/ui/Icon";
+import { Logo } from "../components/ui/Logo";
 import "./screens.css";
 
 type Section = "general" | "appearance" | "editor" | "export" | "runtime" | "updates" | "itchio" | "developer" | "about";
@@ -461,7 +462,7 @@ export function Settings() {
               <div className="card">
                 <div style={{ display: "flex", alignItems: "center", gap: "var(--sp-3)", marginBottom: "var(--sp-4)" }}>
                   <div className="brandMark" style={{ width: 40, height: 40 }}>
-                    <Icon name="logo" size={22} />
+                    <Logo size={22} />
                   </div>
                   <div>
                     <div style={{ fontWeight: "var(--fw-semibold)" }}>Scaffold</div>

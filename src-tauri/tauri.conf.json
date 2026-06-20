@@ -50,6 +50,20 @@
         "center": true,
         "decorations": true,
         "visible": false
+      },
+      {
+        "label": "projects",
+        "title": "Scaffold Projects",
+        "url": "index.html?window=projects",
+        "width": 1280,
+        "height": 800,
+        "minWidth": 900,
+        "minHeight": 600,
+        "resizable": true,
+        "fullscreen": false,
+        "center": true,
+        "decorations": true,
+        "visible": false
       }
     ],
     "security": {

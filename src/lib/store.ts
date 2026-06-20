@@ -112,14 +112,21 @@ function mergeKeyboardShortcuts(
 async function loadSettings(): Promise<AppSettings> {
   try {
     const store = await readStore();
-    if (!store) return { ...DEFAULT_SETTINGS };
+    if (!store) {
+      console.log("No store available, using defaults");
+      return { ...DEFAULT_SETTINGS };
+    }
     const saved = (await store.get<Partial<AppSettings>>("settings")) ?? {};
-    return {
+    console.log("Loaded settings from store:", saved);
+    const result = {
       ...DEFAULT_SETTINGS,
       ...saved,
       keyboardShortcuts: mergeKeyboardShortcuts(saved.keyboardShortcuts),
     };
-  } catch {
+    console.log("Merged settings:", result);
+    return result;
+  } catch (error) {
+    console.error("Failed to load settings:", error);
     // If the store plugin is unavailable (e.g., permission denied in a
     // sub-window before capabilities are updated), fall back to defaults
     // so the app doesn't hang on the boot screen forever.
@@ -130,11 +137,16 @@ async function loadSettings(): Promise<AppSettings> {
 async function saveSettings(settings: AppSettings): Promise<void> {
   try {
     const store = await readStore();
-    if (!store) return;
+    if (!store) {
+      console.error("Failed to save settings: store not available");
+      return;
+    }
     await store.set("settings", settings);
     await store.save();
-  } catch {
-    // Silently ignore — settings are in-memory until the next save.
+    console.log("Settings saved successfully:", settings);
+  } catch (error) {
+    console.error("Failed to save settings:", error);
+    // Settings are in-memory until the next save attempt.
   }
 }
 
@@ -157,8 +169,11 @@ export const useAppStore = create<AppState>((set, get) => ({
     const needsOnboarding = !settings.onboarded;
     const onboardingWin = isOnboardingWindow();
 
+    console.log("Init: onboarded=", settings.onboarded, "needsOnboarding=", needsOnboarding, "isOnboardingWindow=", onboardingWin);
+
     if (needsOnboarding && !onboardingWin) {
       // Main window: onboarding is needed → show the onboarding window
+      console.log("Showing onboarding window from main window");
       set({
         settings,
         needsOnboarding: true,
@@ -178,6 +193,7 @@ export const useAppStore = create<AppState>((set, get) => ({
             : { name: "dashboard" },
         ready: true,
       });
+      console.log("Init complete, route:", needsOnboarding && onboardingWin ? "onboarding" : "dashboard");
     }
   },
 
@@ -226,9 +242,11 @@ export const useAppStore = create<AppState>((set, get) => ({
       defaultProjectDir: dir,
       theme,
     };
+    console.log("Completing onboarding with settings:", settings);
     applyTheme(theme);
     set({ settings, needsOnboarding: false, route: { name: "dashboard" } });
     await saveSettings(settings);
+    console.log("Onboarding complete, onboarded:", settings.onboarded);
   },
 
   async resetOnboarding() {

@@ -5,43 +5,135 @@
   height: 100%;
   padding: 0 var(--sp-4);
   gap: var(--sp-4);
+  border-bottom: 1px solid var(--border-subtle);
 }
 
-.left {
+.topbarLeft {
   display: flex;
   align-items: center;
   gap: var(--sp-3);
   min-width: 0;
+  flex: 1;
 }
 
-.crumb {
-  display: flex;
-  align-items: center;
-  gap: var(--sp-2);
-  font-size: var(--fs-sm);
-  color: var(--fg-secondary);
-}
-.crumb strong {
-  color: var(--fg-primary);
+.topbarTitle {
+  font-size: var(--fs-base);
   font-weight: var(--fw-semibold);
+  color: var(--fg-primary);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 
-.right {
+.topbarCenter {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+
+.topbarViewToggle {
+  display: inline-flex;
+  align-items: center;
+  gap: 2px;
+  padding: 2px;
+  background: var(--bg-sunken);
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-md);
+}
+
+.topbarViewBtn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 28px;
+  height: 28px;
+  border: none;
+  border-radius: var(--radius-sm);
+  background: transparent;
+  color: var(--fg-muted);
+  cursor: pointer;
+  padding: 0;
+  transition: background var(--dur-fast) var(--ease-out),
+    color var(--dur-fast) var(--ease-out);
+}
+
+.topbarViewBtn:hover {
+  color: var(--fg-primary);
+}
+
+.topbarViewBtn.active {
+  background: var(--bg-surface);
+  color: var(--accent);
+  box-shadow: var(--shadow-sm);
+}
+
+.topbarRight {
   display: flex;
   align-items: center;
   gap: var(--sp-2);
+  flex-shrink: 0;
 }
 
-.saveBadge {
-  display: flex;
+.topbarIconBtn {
+  display: inline-flex;
   align-items: center;
+  justify-content: center;
+  width: 32px;
+  height: 32px;
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-md);
+  background: var(--bg-surface);
+  color: var(--fg-secondary);
+  cursor: pointer;
+  padding: 0;
+  transition: all var(--dur-fast) var(--ease-out);
+}
+
+.topbarIconBtn:hover {
+  border-color: var(--border-default);
+  color: var(--fg-primary);
+  background: var(--bg-hover);
+}
+
+.topbarCmdBtn {
+  width: auto;
+  padding: 0 var(--sp-2);
   gap: var(--sp-1);
   font-size: var(--fs-xs);
+  font-weight: var(--fw-medium);
+}
+
+.topbarCmdHint {
+  font-family: var(--font-mono);
+  font-size: 10px;
   color: var(--fg-muted);
 }
-.saveDot {
-  width: 6px;
-  height: 6px;
-  border-radius: 50%;
-  background: var(--success);
+
+.topbarDivider {
+  width: 1px;
+  height: 20px;
+  background: var(--border-subtle);
+  margin: 0 var(--sp-1);
+}
+
+.topbarAvatarBtn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 32px;
+  height: 32px;
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-full);
+  background: var(--bg-sunken);
+  color: var(--fg-secondary);
+  cursor: pointer;
+  padding: 0;
+  transition: all var(--dur-fast) var(--ease-out);
+}
+
+.topbarAvatarBtn:hover {
+  border-color: var(--accent);
+  color: var(--accent);
+  background: var(--accent-subtle);
 }

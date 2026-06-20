@@ -1,5 +1,6 @@
 import { useAppStore } from "../../lib/store";
 import { Button } from "../ui/Button";
+import { Icon } from "../ui/Icon";
 import { openDocsWindow } from "../../lib/ipc";
 import "./TopBar.css";
 
@@ -15,6 +16,8 @@ export function TopBar() {
   const route = useAppStore((s) => s.route);
   const navigate = useAppStore((s) => s.navigate);
   const projects = useAppStore((s) => s.projects);
+  const view = useAppStore((s) => s.settings.dashboardView);
+  const setDashboardView = useAppStore((s) => s.setDashboardView);
 
   let title = TITLES[route.name] ?? "Scaffold";
   let actions: React.ReactNode = null;
@@ -27,7 +30,6 @@ export function TopBar() {
         <Button variant="ghost" size="sm" icon="publish" onClick={() => navigate({ name: "publish", projectId: route.projectId })}>
           Publish
         </Button>
-        <Button variant="secondary" size="sm" icon="eye">Preview</Button>
       </>
     );
   }
@@ -58,17 +60,61 @@ export function TopBar() {
 
   return (
     <div className="topbar">
-      <div className="left">
-        <div className="crumb">
-          <strong>{title}</strong>
-        </div>
+      <div className="topbarLeft">
+        <span className="topbarTitle">{title}</span>
       </div>
-      <div className="right">
-        <div className="saveBadge">
-          <span className="saveDot" />
-          Saved locally
-        </div>
-        {actions}
+
+      <div className="topbarCenter">
+        {route.name === "dashboard" && (
+          <div className="topbarViewToggle" role="group" aria-label="Project view">
+            <button
+              type="button"
+              className={`topbarViewBtn ${view === "grid" ? "active" : ""}`}
+              onClick={() => setDashboardView("grid")}
+              aria-pressed={view === "grid"}
+              title="Grid view"
+            >
+              <Icon name="grid" size={14} />
+            </button>
+            <button
+              type="button"
+              className={`topbarViewBtn ${view === "list" ? "active" : ""}`}
+              onClick={() => setDashboardView("list")}
+              aria-pressed={view === "list"}
+              title="List view"
+            >
+              <Icon name="list" size={14} />
+            </button>
+          </div>
+        )}
+      </div>
+
+      <div className="topbarRight">
+        <button
+          className="topbarIconBtn topbarCmdBtn"
+          onClick={() => {
+            // Dispatch Cmd+K programmatically — the App listener handles it.
+            window.dispatchEvent(new KeyboardEvent("keydown", {
+              metaKey: true,
+              key: "k",
+              bubbles: true,
+            }));
+          }}
+          title="Command palette (⌘K)"
+        >
+          <Icon name="search" size={14} />
+          <span className="topbarCmdHint">⌘K</span>
+        </button>
+
+        <button className="topbarIconBtn" title="Notifications" aria-label="Notifications">
+          <Icon name="bell" size={16} />
+        </button>
+
+        <div className="topbarDivider" />
+
+        <button className="topbarAvatarBtn" title="Profile" aria-label="Profile">
+          <Icon name="user" size={16} />
+        </button>
       </div>
     </div>
   );

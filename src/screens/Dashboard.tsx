@@ -56,28 +56,6 @@ export function Dashboard() {
           </p>
         </div>
         <div className="screenHeaderActions">
-          {active.length > 0 && (
-            <div className="viewToggle" role="group" aria-label="Project view">
-              <button
-                type="button"
-                className={`viewToggleBtn ${view === "grid" ? "active" : ""}`}
-                onClick={() => setDashboardView("grid")}
-                aria-pressed={view === "grid"}
-                title="Grid view"
-              >
-                <Icon name="grid" size={16} />
-              </button>
-              <button
-                type="button"
-                className={`viewToggleBtn ${view === "list" ? "active" : ""}`}
-                onClick={() => setDashboardView("list")}
-                aria-pressed={view === "list"}
-                title="List view"
-              >
-                <Icon name="list" size={16} />
-              </button>
-            </div>
-          )}
           <Button variant="primary" icon="plus" onClick={() => navigate({ name: "new-project" })}>
             New Project
           </Button>

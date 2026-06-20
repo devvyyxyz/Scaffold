@@ -102,7 +102,7 @@ function ErrorScreen({ error, errorInfo, onReset }: ErrorScreenProps) {
           <Button variant="primary" icon="refresh" onClick={onReset}>
             Try again
           </Button>
-          <Button variant="ghost" onClick={() => window.location.href = "/"}>
+          <Button variant="ghost" icon="home" onClick={() => window.location.href = "/"}>
             Go to dashboard
           </Button>
         </div>

@@ -346,8 +346,10 @@ export function Settings() {
                     {cacheStats.projectsCached ? `${cacheStats.manifestsCached} manifests` : "empty"}
                   </span>
                 </SettingRow>
-                <SettingRow title="Clear cache" desc="Remove cached build artifacts." comingSoon>
-                  <Button variant="ghost" size="sm" icon="check" disabled>Clear cache</Button>
+                <SettingRow title="Clear cache" desc="Clear in-memory caches for projects and manifests.">
+                  <Button variant="ghost" size="sm" icon="trash" onClick={handleClearCache}>
+                    Clear cache
+                  </Button>
                 </SettingRow>
                 <p className="hint" style={{ marginTop: "var(--sp-2)" }}>
                   The bundled Node/Bun runtime for scaffolding target projects ships in a later phase.
@@ -473,51 +475,6 @@ export function Settings() {
                         </div>
                       </div>
                     )}
-                  </div>
-                )}
-
-                <SettingRow title="Clear cache" desc="Clear in-memory caches for projects and manifests. The app will reload data from disk.">
-                  <Button variant="ghost" size="sm" icon="trash" onClick={handleClearCache}>
-                    Clear cache
-                  </Button>
-                </SettingRow>
-
-                {showClearCacheModal && (
-                  <div style={{ marginTop: "var(--sp-4)" }}>
-                    <div className="card" style={{ maxWidth: 400 }}>
-                      <h3 style={{ fontSize: "var(--fs-base)", fontWeight: "var(--fw-semibold)", marginBottom: "var(--sp-3)" }}>
-                        Clear cache
-                      </h3>
-                      <p style={{ fontSize: "var(--fs-sm)", color: "var(--fg-secondary)", marginBottom: "var(--sp-4)" }}>
-                        Select what to clear:
-                      </p>
-                      <div style={{ display: "flex", flexDirection: "column", gap: "var(--sp-2)", marginBottom: "var(--sp-4)" }}>
-                        <label style={{ display: "flex", alignItems: "center", gap: "var(--sp-2)", cursor: "pointer" }}>
-                          <input
-                            type="checkbox"
-                            checked={clearCacheOptions.projects}
-                            onChange={(e) => setClearCacheOptions({ ...clearCacheOptions, projects: e.target.checked })}
-                          />
-                          <span style={{ fontSize: "var(--fs-sm)" }}>Projects list ({cacheStats.projectsCached ? "cached" : "empty"})</span>
-                        </label>
-                        <label style={{ display: "flex", alignItems: "center", gap: "var(--sp-2)", cursor: "pointer" }}>
-                          <input
-                            type="checkbox"
-                            checked={clearCacheOptions.manifests}
-                            onChange={(e) => setClearCacheOptions({ ...clearCacheOptions, manifests: e.target.checked })}
-                          />
-                          <span style={{ fontSize: "var(--fs-sm)" }}>Manifests ({cacheStats.manifestsCached} cached)</span>
-                        </label>
-                      </div>
-                      <div style={{ display: "flex", gap: "var(--sp-2)", justifyContent: "flex-end" }}>
-                        <Button variant="ghost" size="sm" onClick={() => setShowClearCacheModal(false)}>
-                          Cancel
-                        </Button>
-                        <Button variant="primary" size="sm" icon="trash" onClick={confirmClearCache}>
-                          Clear selected
-                        </Button>
-                      </div>
-                    </div>
                   </div>
                 )}
 

@@ -15,6 +15,9 @@ src-tauri/gen/schemas/
 .env.*
 !.env.example
 
+# Graphify knowledge graph (local)
+graphify-out/
+
 # Editor / OS
 .DS_Store
 *.log

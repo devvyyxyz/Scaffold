@@ -153,10 +153,10 @@ export async function fsCopyDir(from: string, to: string): Promise<void> {
 
 /** Get the current app version from the Tauri app metadata. */
 export async function getAppVersion(): Promise<string> {
-  if (!isTauri()) return "0.1.0";
+  if (!isTauri()) return "0.2.0";
   try {
     return await getVersion();
   } catch {
-    return "0.1.0";
+    return "0.2.0";
   }
 }

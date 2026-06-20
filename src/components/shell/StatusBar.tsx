@@ -6,7 +6,7 @@ import "./StatusBar.css";
 export function StatusBar() {
   const route = useAppStore((s) => s.route);
   const settings = useAppStore((s) => s.settings);
-  const [version, setVersion] = useState("0.1.0");
+  const [version, setVersion] = useState(import.meta.env.VITE_APP_VERSION || "0.1.0");
 
   const runtimeLabel = isTauri() ? "Native" : "Browser (dev)";
 

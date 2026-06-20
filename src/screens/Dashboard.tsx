@@ -185,12 +185,13 @@ function ProjectRow({
   onOpen: () => void;
   onChanged: () => void;
 }) {
-  const [confirming, setConfirming] = useState(false);
+  const [confirmingArchive, setConfirmingArchive] = useState(false);
+  const [confirmingDuplicate, setConfirmingDuplicate] = useState(false);
   const [duplicating, setDuplicating] = useState(false);
 
   const handleArchive = async () => {
     await archiveProject(project.id);
-    setConfirming(false);
+    setConfirmingArchive(false);
     onChanged();
   };
 
@@ -202,6 +203,7 @@ function ProjectRow({
     } finally {
       setDuplicating(false);
     }
+    setConfirmingDuplicate(false);
   };
 
   return (
@@ -236,27 +238,27 @@ function ProjectRow({
           title="Show in Folder"
           aria-label={`Show ${project.name} in folder`}
         />
-        <Button
-          variant="ghost"
-          size="sm"
-          icon="copy"
-          disabled={duplicating}
-          onClick={handleDuplicate}
-          title="Duplicate"
-          aria-label={`Duplicate ${project.name}`}
-        />
+          <Button
+            variant="ghost"
+            size="sm"
+            icon="copy"
+            disabled={duplicating}
+            onClick={() => setConfirmingDuplicate(true)}
+            title="Duplicate"
+            aria-label={`Duplicate ${project.name}`}
+          />
         <Button
           variant="ghost"
           size="sm"
           icon="archive"
-          onClick={() => setConfirming(true)}
+          onClick={() => setConfirmingArchive(true)}
           title="Archive"
           aria-label={`Archive ${project.name}`}
         />
       </div>
 
       <ConfirmDialog
-        open={confirming}
+        open={confirmingArchive}
         title={`Archive "${project.name}"?`}
         message={
           <>
@@ -267,7 +269,20 @@ function ProjectRow({
         confirmLabel="Archive"
         tone="default"
         onConfirm={handleArchive}
-        onCancel={() => setConfirming(false)}
+        onCancel={() => setConfirmingArchive(false)}
+      />
+      <ConfirmDialog
+        open={confirmingDuplicate}
+        title={`Duplicate "${project.name}"?`}
+        message={
+          <>
+            This will create a copy of the project in your projects folder.
+          </>
+        }
+        confirmLabel="Duplicate"
+        tone="default"
+        onConfirm={handleDuplicate}
+        onCancel={() => setConfirmingDuplicate(false)}
       />
     </div>
   );

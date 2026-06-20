@@ -16,7 +16,7 @@ import {
   ThemePref,
 } from "./types";
 import { isTauri, isOnboardingWindow, showOnboardingWindow } from "./ipc";
-import { purgeExpiredArchives } from "./projects";
+import { purgeExpiredArchives, unloadProject } from "./projects";
 
 const STORE_FILE = "settings.json";
 
@@ -56,9 +56,14 @@ interface AppState {
   /** Cached list of projects from the registry. */
   projects: Project[];
 
+  // ---- current project (single-load guarantee) ----
+  /** The id of the currently-loaded project, or null when no project is open.
+   *  Set automatically by `navigate` when entering/leaving the editor. */
+  currentProjectId: string | null;
+
   // ---- actions ----
   init: () => Promise<void>;
-  navigate: (route: Route) => void;
+  navigate: (route: Route) => Promise<void>;
   setTheme: (pref: ThemePref) => Promise<void>;
   setDefaultProjectDir: (dir: string | null) => Promise<void>;
   completeOnboarding: (dir: string, theme: ThemePref, extra?: Partial<AppSettings>) => Promise<void>;
@@ -69,6 +74,9 @@ interface AppState {
   toggleSidebar: () => Promise<void>;
   setDashboardView: (view: "grid" | "list") => Promise<void>;
   setKeyboardShortcuts: (shortcuts: KeyboardShortcuts) => Promise<void>;
+  /** Replace the current project id without side-effects (used by Editor after
+   *  the project is actually loaded). Callers should normally use `navigate`. */
+  _setCurrentProjectId: (id: string | null) => void;
 }
 
 async function readStore() {
@@ -135,6 +143,7 @@ export const useAppStore = create<AppState>((set, get) => ({
   settings: { ...DEFAULT_SETTINGS },
   route: { name: "onboarding" },
   projects: [],
+  currentProjectId: null,
 
   async init() {
     const settings = await loadSettings();
@@ -171,7 +180,27 @@ export const useAppStore = create<AppState>((set, get) => ({
     }
   },
 
-  navigate(route) {
+  async navigate(route) {
+    const prev = get().route;
+
+    // If we're navigating away from the editor (or switching to a different
+    // project in the editor), unload the current project first.
+    if (prev.name === "editor") {
+      const nextIsDifferentEditor =
+        route.name === "editor" && route.projectId !== prev.projectId;
+      const leavingEditor = route.name !== "editor";
+      if (nextIsDifferentEditor || leavingEditor) {
+        await unloadProject(prev.projectId);
+        set({ currentProjectId: null });
+      }
+    }
+
+    // Set the new current project id *before* setting the route so the Editor
+    // component sees the new id in its effect.
+    if (route.name === "editor") {
+      set({ currentProjectId: route.projectId });
+    }
+
     set({ route });
   },
 
@@ -248,6 +277,10 @@ export const useAppStore = create<AppState>((set, get) => ({
     const settings = { ...get().settings, keyboardShortcuts };
     set({ settings });
     await saveSettings(settings);
+  },
+
+  _setCurrentProjectId(id) {
+    set({ currentProjectId: id });
   },
 }));
 

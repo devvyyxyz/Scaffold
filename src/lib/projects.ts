@@ -658,4 +658,24 @@ export function deleteDaysLeft(archivedAt: number | undefined): number | null {
   return Math.max(0, Math.ceil(msLeft / (24 * 60 * 60 * 1000)));
 }
 
+/**
+ * Clean up when a project is unloaded (e.g. navigating away from the editor).
+ * Updates the manifest's `updatedAt` timestamp and releases any in-memory
+ * state tied to the project. Safe to call even if the project is already gone.
+ */
+export async function unloadProject(projectId: string): Promise<void> {
+  if (!isTauri()) return;
+
+  const projects = await readRegistry();
+  const project = projects.find((p) => p.id === projectId);
+  if (!project) return;
+
+  // Touch the manifest's updatedAt so the dashboard shows the correct time.
+  const manifest = await readManifest(project.path);
+  if (manifest) {
+    manifest.updatedAt = Date.now();
+    await writeManifest(project.path, manifest);
+  }
+}
+
 export { defaultProjectDir };

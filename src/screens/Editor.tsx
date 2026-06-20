@@ -178,6 +178,8 @@ function makeId(): string {
 
 export function Editor({ projectId }: { projectId: string }) {
   const navigate = useAppStore((s) => s.navigate);
+  const storeProjectId = useAppStore((s) => s.currentProjectId);
+  const setCurrentProjectId = useAppStore((s) => s._setCurrentProjectId);
 
   // ---- async load state ----
   // phase: "loading" (reading manifest) | "ready" (open it) | "error" (missing/corrupt)
@@ -199,6 +201,14 @@ export function Editor({ projectId }: { projectId: string }) {
     setNotFound(false);
     setLoadResult(null);
     setRepairError(null);
+
+    // Single-load guard: if the store says a different project is already
+    // loaded, something went wrong (e.g. bypassing store.navigate). Abort.
+    if (storeProjectId !== null && storeProjectId !== projectId) {
+      setNotFound(true);
+      return;
+    }
+
     loadProject(projectId)
       .then((result) => {
         if (cancelled) return;
@@ -208,16 +218,28 @@ export function Editor({ projectId }: { projectId: string }) {
         }
         setLoadResult(result);
         setPhase(result.status === "ok" ? "ready" : "error");
+
+        // Confirm this project is the one loaded in the store.
+        if (result.status === "ok") {
+          setCurrentProjectId(projectId);
+        }
       })
       .catch(() => {
         if (cancelled) return;
         // Unexpected registry failure — treat as not found rather than crash.
         setNotFound(true);
       });
+
     return () => {
       cancelled = true;
+      // On unmount, clear the loaded project marker only if we're the one
+      // that set it (another Editor may have mounted for a different project).
+      const { currentProjectId } = useAppStore.getState();
+      if (currentProjectId === projectId) {
+        setCurrentProjectId(null);
+      }
     };
-  }, [projectId]);
+  }, [projectId, storeProjectId, setCurrentProjectId]);
 
   // Not in the registry at all.
   if (notFound) {

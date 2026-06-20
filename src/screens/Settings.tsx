@@ -1,8 +1,9 @@
 import { open, Command } from "@tauri-apps/plugin-shell";
 import { open as openDialog } from "@tauri-apps/plugin-dialog";
+import { useEffect, useMemo, useState } from "react";
 import { useAppStore } from "../lib/store";
 import { isTauri } from "../lib/ipc";
-import { AppSettings, ThemePref, AutoSaveInterval, CanvasZoom, SettingsSection } from "../lib/types";
+import { AppSettings, ThemePref, AutoSaveInterval, CanvasZoom, SettingsSection, DEFAULT_KEYBOARD_SHORTCUTS, KeyboardShortcut } from "../lib/types";
 import { Button } from "../components/ui/Button";
 import { Select } from "../components/ui/Field";
 import { Segmented } from "../components/ui/Field";
@@ -11,12 +12,14 @@ import { Logo } from "../components/ui/Logo";
 import { Toggle } from "../components/ui/Toggle";
 import { SettingSection, SettingRow } from "../components/ui/Setting";
 import "./screens.css";
+import "./SettingsKeyboard.css";
 
 type Section = SettingsSection;
 
 const SECTIONS: { id: Section; label: string; icon: IconName }[] = [
   { id: "general", label: "General", icon: "settings" },
   { id: "appearance", label: "Appearance", icon: "sun" },
+  { id: "keyboard", label: "Keyboard", icon: "keyboard" },
   { id: "editor", label: "Editor", icon: "code" },
   { id: "export", label: "Export", icon: "publish" },
   { id: "runtime", label: "Runtime", icon: "code" },
@@ -34,6 +37,7 @@ const DEV_SECTION: { id: Section; label: string; icon: IconName } = {
 const SECTION_DESC: Partial<Record<Section, string>> = {
   general: "Core workspace preferences and application behaviour.",
   appearance: "Theme and visual preferences. Changes apply instantly.",
+  keyboard: "View and customise keyboard shortcuts.",
   editor: "Canvas defaults and editing behaviour.",
   export: "How generated code is written out.",
   runtime: "The bundled build runtime.",
@@ -220,6 +224,10 @@ export function Settings() {
                   />
                 </SettingRow>
               </SettingSection>
+            )}
+
+            {section === "keyboard" && (
+              <KeyboardSection />
             )}
 
             {section === "editor" && (
@@ -484,6 +492,187 @@ export function Settings() {
         </section>
       </div>
     </div>
+  );
+}
+
+function formatShortcutKeys(keys: string[][]): React.ReactNode {
+  return keys.map((chord, ci) => (
+    <span key={ci} style={{ display: "flex", alignItems: "center", gap: 3 }}>
+      {ci > 0 && <span className="kbdSeparator">or</span>}
+      {chord.map((k, ki) => (
+        <span key={ki}>
+          {ki > 0 && <span className="kbdSeparator">+</span>}
+          <kbd className={`kbd ${k === "Cmd" || k === "Shift" || k === "Ctrl" || k === "Alt" ? "kbdMod" : ""}`}>{k}</kbd>
+        </span>
+      ))}
+    </span>
+  ));
+}
+
+function KeyboardSection() {
+  const [recording, setRecording] = useState<string | null>(null);
+  const shortcuts = useAppStore((s) => s.settings.keyboardShortcuts);
+  const setKeyboardShortcuts = useAppStore((s) => s.setKeyboardShortcuts);
+
+  // Group by category.
+  const groups = useMemo(() => {
+    const catOrder: KeyboardShortcut["category"][] = ["General", "Navigation", "Editor", "Canvas"];
+    const all = Object.values(shortcuts);
+    return catOrder
+      .map((cat) => ({ category: cat, items: all.filter((s) => s.category === cat) }))
+      .filter((g) => g.items.length > 0);
+  }, [shortcuts]);
+
+  function commit(next: Record<string, KeyboardShortcut>) {
+    void setKeyboardShortcuts(next);
+  }
+
+  function startRecording(id: string) {
+    setRecording(id);
+  }
+
+  function handleRecordKey(e: React.KeyboardEvent) {
+    if (!recording) return;
+    e.preventDefault();
+    e.stopPropagation();
+
+    const parts: string[] = [];
+    if (e.metaKey) parts.push("Cmd");
+    if (e.ctrlKey) parts.push("Ctrl");
+    if (e.shiftKey) parts.push("Shift");
+    if (e.altKey) parts.push("Alt");
+
+    // Don't record modifier-only chords.
+    const key = e.key;
+    if (key === "Meta" || key === "Control" || key === "Shift" || key === "Alt") return;
+
+    parts.push(key === " " ? "Space" : key);
+
+    const prev = shortcuts;
+    const updated = { ...prev };
+    if (updated[recording]) {
+      updated[recording] = { ...updated[recording], keys: [parts] };
+    }
+    commit(updated);
+    setRecording(null);
+  }
+
+  function resetShortcut(id: string) {
+    const prev = shortcuts;
+    const updated = { ...prev };
+    if (updated[id]) {
+      updated[id] = { ...updated[id], keys: updated[id].defaults.map((c) => [...c]) };
+    }
+    commit(updated);
+  }
+
+  function resetAll() {
+    const prev = shortcuts;
+    const updated = { ...prev };
+    for (const id of Object.keys(updated)) {
+      updated[id] = { ...updated[id], keys: updated[id].defaults.map((c) => [...c]) };
+    }
+    commit(updated);
+  }
+
+  const hasChanges = Object.values(shortcuts).some(
+    (s) => JSON.stringify(s.keys) !== JSON.stringify(s.defaults),
+  );
+
+  return (
+    <SettingSection title="Shortcuts" icon="keyboard">
+      {groups.map((group) => (
+        <div key={group.category} style={{ marginBottom: "var(--sp-3)" }}>
+          <div
+            style={{
+              fontSize: "var(--fs-xs)",
+              fontWeight: "var(--fw-semibold)",
+              textTransform: "uppercase",
+              letterSpacing: "0.06em",
+              color: "var(--fg-muted)",
+              marginBottom: "var(--sp-1)",
+              padding: "0 var(--sp-1)",
+            }}
+          >
+            {group.category}
+          </div>
+          <div className="keyboardShortcutList">
+            {group.items.map((shortcut) => {
+              const isRecording = recording === shortcut.id;
+              return (
+                <div
+                  key={shortcut.id}
+                  className={`keyboardShortcutRow ${isRecording ? "recording" : ""}`}
+                  tabIndex={0}
+                  onKeyDown={isRecording ? handleRecordKey : undefined}
+                >
+                  <div className="keyboardShortcutRowLabel">
+                    <div className="keyboardShortcutRowTitle">{shortcut.label}</div>
+                    {shortcut.description && (
+                      <div className="keyboardShortcutRowDesc">{shortcut.description}</div>
+                    )}
+                  </div>
+                  <div className="keyboardShortcutRowKeys">
+                    {isRecording ? (
+                      <span className="recordingBadge">
+                        <span className="recordingDot" />
+                        Press keys…
+                      </span>
+                    ) : (
+                      formatShortcutKeys(shortcut.keys)
+                    )}
+                    <button
+                      className="keyboardResetBtn"
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        if (isRecording) {
+                          setRecording(null);
+                        } else {
+                          startRecording(shortcut.id);
+                        }
+                      }}
+                      title={isRecording ? "Cancel" : "Rebind"}
+                      style={{ marginLeft: "var(--sp-2)" }}
+                    >
+                      {isRecording ? "×" : <Icon name="code" size={12} />}
+                    </button>
+                    {JSON.stringify(shortcut.keys) !== JSON.stringify(shortcut.defaults) && (
+                      <button
+                        className="keyboardResetBtn"
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          resetShortcut(shortcut.id);
+                        }}
+                        title="Reset to default"
+                      >
+                        ↺
+                      </button>
+                    )}
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+        </div>
+      ))}
+
+      {hasChanges && (
+        <div style={{ marginTop: "var(--sp-4)" }}>
+          <Button
+            variant="ghost"
+            size="sm"
+            icon="settings"
+            onClick={resetAll}
+          >
+            Reset all to defaults
+          </Button>
+        </div>
+      )}
+
+      <p className="hint" style={{ marginTop: "var(--sp-4)" }}>
+        Click the <Icon name="code" size={12} /> icon next to a shortcut to rebind it. Changes apply instantly.
+      </p>
+    </SettingSection>
   );
 }
 

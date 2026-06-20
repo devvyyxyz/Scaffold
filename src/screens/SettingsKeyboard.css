@@ -1,0 +1,273 @@
+/* ---- Keyboard Shortcuts Settings ---- */
+.keyboardShortcutList {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.keyboardShortcutRow {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: var(--sp-2) var(--sp-3);
+  border-radius: var(--radius-md);
+  transition: background var(--dur-fast) var(--ease-out);
+  min-height: 36px;
+}
+
+.keyboardShortcutRow:hover {
+  background: var(--bg-hover);
+}
+
+.keyboardShortcutRowLabel {
+  display: flex;
+  flex-direction: column;
+  gap: 1px;
+  min-width: 0;
+}
+
+.keyboardShortcutRowTitle {
+  font-size: var(--fs-sm);
+  font-weight: var(--fw-medium);
+  color: var(--fg-primary);
+}
+
+.keyboardShortcutRowDesc {
+  font-size: var(--fs-xs);
+  color: var(--fg-muted);
+}
+
+.keyboardShortcutRowKeys {
+  display: flex;
+  align-items: center;
+  gap: 3px;
+  flex-shrink: 0;
+}
+
+.kbd {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 24px;
+  height: 24px;
+  padding: 0 6px;
+  border-radius: var(--radius-sm);
+  background: var(--bg-sunken);
+  border: 1px solid var(--border-subtle);
+  font-family: var(--font-mono);
+  font-size: 10px;
+  font-weight: var(--fw-semibold);
+  color: var(--fg-secondary);
+  white-space: nowrap;
+  user-select: none;
+}
+
+.kbdMod {
+  background: var(--bg-active);
+  color: var(--fg-secondary);
+}
+
+.kbdSeparator {
+  color: var(--fg-muted);
+  font-size: 10px;
+  margin: 0 1px;
+}
+
+/* ---- Recording state ---- */
+.keyboardShortcutRow.recording {
+  background: var(--accent-subtle);
+  border: 1px solid var(--accent);
+  margin: -1px;
+}
+
+.recordingBadge {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--sp-1);
+  font-size: var(--fs-xs);
+  color: var(--accent);
+  font-weight: var(--fw-semibold);
+}
+
+.recordingDot {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: var(--accent);
+  animation: recordPulse 1s ease-in-out infinite;
+}
+
+@keyframes recordPulse {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.3; }
+}
+
+/* ---- Reset button ---- */
+.keyboardResetBtn {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--sp-1);
+  padding: 2px 6px;
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-sm);
+  background: var(--bg-surface);
+  color: var(--fg-muted);
+  font-size: 10px;
+  cursor: pointer;
+  transition: all var(--dur-fast) var(--ease-out);
+}
+
+.keyboardResetBtn:hover {
+  border-color: var(--accent);
+  color: var(--accent);
+}
+
+.keyboardResetBtn:disabled {
+  opacity: 0.3;
+  cursor: default;
+}
+
+/* ---- Keyboard Shortcuts Overlay ---- */
+.ksOverlay {
+  position: fixed;
+  inset: 0;
+  z-index: 100;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: rgba(0, 0, 0, 0.5);
+  backdrop-filter: blur(4px);
+  animation: ksFadeIn 150ms var(--ease-out);
+}
+
+@keyframes ksFadeIn {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+.ksPanel {
+  background: var(--bg-surface);
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-xl);
+  box-shadow: var(--shadow-lg);
+  width: min(640px, 90vw);
+  max-height: min(80vh, 700px);
+  display: flex;
+  flex-direction: column;
+  animation: ksSlideIn 150ms var(--ease-out);
+}
+
+@keyframes ksSlideIn {
+  from { transform: translateY(8px); opacity: 0; }
+  to { transform: translateY(0); opacity: 1; }
+}
+
+.ksHeader {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: var(--sp-5) var(--sp-6);
+  border-bottom: 1px solid var(--border-subtle);
+  flex-shrink: 0;
+}
+
+.ksHeaderLeft {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.ksTitle {
+  font-size: var(--fs-lg);
+  font-weight: var(--fw-bold);
+  letter-spacing: -0.01em;
+}
+
+.ksSubtitle {
+  font-size: var(--fs-xs);
+  color: var(--fg-muted);
+}
+
+.ksCloseBtn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 28px;
+  height: 28px;
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-md);
+  background: var(--bg-surface);
+  color: var(--fg-muted);
+  cursor: pointer;
+  transition: all var(--dur-fast) var(--ease-out);
+}
+
+.ksCloseBtn:hover {
+  border-color: var(--border-default);
+  color: var(--fg-primary);
+}
+
+.ksBody {
+  flex: 1;
+  overflow-y: auto;
+  padding: var(--sp-3) var(--sp-6) var(--sp-5);
+}
+
+.ksCategory {
+  margin-bottom: var(--sp-5);
+}
+
+.ksCategory:last-child {
+  margin-bottom: 0;
+}
+
+.ksCategoryTitle {
+  font-size: var(--fs-xs);
+  font-weight: var(--fw-semibold);
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  color: var(--fg-muted);
+  margin-bottom: var(--sp-2);
+  padding: 0 var(--sp-1);
+}
+
+.ksShortcutRow {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: var(--sp-2) var(--sp-2);
+  border-radius: var(--radius-md);
+  transition: background var(--dur-fast) var(--ease-out);
+}
+
+.ksShortcutRow:hover {
+  background: var(--bg-hover);
+}
+
+.ksShortcutLabel {
+  font-size: var(--fs-sm);
+  color: var(--fg-primary);
+}
+
+.ksShortcutKeys {
+  display: flex;
+  align-items: center;
+  gap: 3px;
+}
+
+.ksFooter {
+  display: flex;
+  align-items: center;
+  gap: var(--sp-4);
+  padding: var(--sp-3) var(--sp-6);
+  border-top: 1px solid var(--border-subtle);
+  flex-shrink: 0;
+}
+
+.ksFooterHint {
+  display: flex;
+  align-items: center;
+  gap: var(--sp-1);
+  font-size: var(--fs-xs);
+  color: var(--fg-muted);
+}

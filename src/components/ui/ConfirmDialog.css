@@ -19,13 +19,14 @@
   border: 1px solid var(--border-default);
   border-radius: var(--radius-lg);
   box-shadow: var(--shadow-lg);
-  padding: var(--sp-5);
+  padding: 0;
   max-width: 420px;
   width: calc(100% - var(--sp-8));
   display: flex;
   flex-direction: column;
   gap: var(--sp-3);
   animation: confirmPop var(--dur-base) var(--ease-out);
+  overflow: hidden;
 }
 
 @keyframes confirmPop {
@@ -33,29 +34,81 @@
   to { transform: scale(1); opacity: 1; }
 }
 
+/* ---- Tone accent bar ---- */
+.confirmAccent {
+  height: 3px;
+  flex-shrink: 0;
+}
+.confirmAccent.tone-default { background: var(--accent); }
+.confirmAccent.tone-danger  { background: var(--danger); }
+.confirmAccent.tone-success { background: var(--success); }
+.confirmAccent.tone-warning { background: var(--warning); }
+
+/* ---- Icon header ---- */
+.confirmIconRow {
+  display: flex;
+  align-items: center;
+  gap: var(--sp-4);
+  padding: var(--sp-5) var(--sp-5) 0;
+}
+.confirmIconBox {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 44px;
+  height: 44px;
+  border-radius: var(--radius-lg);
+  flex-shrink: 0;
+}
+.confirmIconBox.tone-default {
+  background: var(--accent-subtle);
+  color: var(--accent);
+}
+.confirmIconBox.tone-danger {
+  background: rgba(239, 68, 68, 0.12);
+  color: var(--danger);
+}
+.confirmIconBox.tone-success {
+  background: rgba(34, 197, 94, 0.12);
+  color: var(--success);
+}
+.confirmIconBox.tone-warning {
+  background: rgba(245, 158, 11, 0.12);
+  color: var(--warning);
+}
+
 .confirmTitle {
   font-size: var(--fs-base);
   font-weight: var(--fw-bold);
   margin: 0;
+  flex: 1;
+}
+
+/* ---- Body ---- */
+.confirmBody {
+  padding: var(--sp-1) var(--sp-5) var(--sp-3);
 }
 
 .confirmMessage {
   font-size: var(--fs-sm);
   color: var(--fg-secondary);
   line-height: 1.5;
+  margin: 0;
 }
 
 .confirmError {
   font-size: var(--fs-xs);
-  color: var(--danger, var(--accent));
+  color: var(--danger);
   background: var(--accent-subtle);
   padding: var(--sp-2) var(--sp-3);
   border-radius: var(--radius-md);
+  margin-top: var(--sp-3);
 }
 
 .confirmActions {
   display: flex;
   justify-content: flex-end;
   gap: var(--sp-2);
-  margin-top: var(--sp-2);
+  padding: var(--sp-3) var(--sp-5);
+  border-top: 1px solid var(--border-subtle);
 }

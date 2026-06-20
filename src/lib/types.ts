@@ -128,7 +128,147 @@ export interface AppSettings {
   exportOutputDir: string | null;
   /** Auto-open the generated site in the default browser after export. */
   autoOpenAfterExport: boolean;
+
+  // ── Keyboard ──
+  /** User-customised keyboard shortcut bindings (keyed by shortcut id). */
+  keyboardShortcuts: KeyboardShortcuts;
 }
+
+/** A single keyboard shortcut binding. */
+export interface KeyboardShortcut {
+  id: string;
+  /** Logical group for categorising in the overlay. */
+  category: "General" | "Navigation" | "Editor" | "Canvas";
+  label: string;
+  description?: string;
+  /** Keys stored as an array of arrays so the UI can render & rebind. e.g. [["Cmd","K"]] */
+  keys: string[][];
+  /** The default key chord(s) — never mutated, used for reset. */
+  defaults: string[][];
+}
+
+/** All app-wide keyboard shortcuts, keyed by a stable id. */
+export type KeyboardShortcuts = Record<string, KeyboardShortcut>;
+
+export const DEFAULT_KEYBOARD_SHORTCUTS: KeyboardShortcuts = {
+  "cmd-palette": {
+    id: "cmd-palette",
+    category: "General",
+    label: "Command palette",
+    description: "Search projects, settings, and actions",
+    keys: [["Cmd", "K"]],
+    defaults: [["Cmd", "K"]],
+  },
+  "shortcuts-overlay": {
+    id: "shortcuts-overlay",
+    category: "General",
+    label: "Keyboard shortcuts",
+    description: "Open this reference overlay",
+    keys: [["?"]],
+    defaults: [["?"]],
+  },
+  "toggle-sidebar": {
+    id: "toggle-sidebar",
+    category: "General",
+    label: "Toggle sidebar",
+    description: "Collapse or expand the sidebar",
+    keys: [["Cmd", "B"]],
+    defaults: [["Cmd", "B"]],
+  },
+  "toggle-theme": {
+    id: "toggle-theme",
+    category: "General",
+    label: "Toggle theme",
+    description: "Switch between light and dark",
+    keys: [["Cmd", "Shift", "T"]],
+    defaults: [["Cmd", "Shift", "T"]],
+  },
+  "new-project": {
+    id: "new-project",
+    category: "Navigation",
+    label: "New project",
+    description: "Start the new-project wizard",
+    keys: [["Cmd", "Shift", "N"]],
+    defaults: [["Cmd", "Shift", "N"]],
+  },
+  "go-dashboard": {
+    id: "go-dashboard",
+    category: "Navigation",
+    label: "Go to dashboard",
+    description: "Return to the project library",
+    keys: [["Cmd", "Shift", "D"]],
+    defaults: [["Cmd", "Shift", "D"]],
+  },
+  "go-settings": {
+    id: "go-settings",
+    category: "Navigation",
+    label: "Go to settings",
+    description: "Open the settings page",
+    keys: [["Cmd", ","]],
+    defaults: [["Cmd", ","]],
+  },
+  "edit-undo": {
+    id: "edit-undo",
+    category: "Editor",
+    label: "Undo",
+    description: "Undo the last edit",
+    keys: [["Cmd", "Z"]],
+    defaults: [["Cmd", "Z"]],
+  },
+  "edit-redo": {
+    id: "edit-redo",
+    category: "Editor",
+    label: "Redo",
+    description: "Redo the last undone edit",
+    keys: [["Cmd", "Shift", "Z"]],
+    defaults: [["Cmd", "Shift", "Z"]],
+  },
+  "edit-save": {
+    id: "edit-save",
+    category: "Editor",
+    label: "Save",
+    description: "Save the current project",
+    keys: [["Cmd", "S"]],
+    defaults: [["Cmd", "S"]],
+  },
+  "edit-delete": {
+    id: "edit-delete",
+    category: "Editor",
+    label: "Delete selected",
+    description: "Delete the selected block on the canvas",
+    keys: [["Backspace"], ["Delete"]],
+    defaults: [["Backspace"], ["Delete"]],
+  },
+  "canvas-zoom-in": {
+    id: "canvas-zoom-in",
+    category: "Canvas",
+    label: "Zoom in",
+    keys: [["Cmd", "+"]],
+    defaults: [["Cmd", "+"]],
+  },
+  "canvas-zoom-out": {
+    id: "canvas-zoom-out",
+    category: "Canvas",
+    label: "Zoom out",
+    keys: [["Cmd", "-"]],
+    defaults: [["Cmd", "-"]],
+  },
+  "canvas-zoom-reset": {
+    id: "canvas-zoom-reset",
+    category: "Canvas",
+    label: "Reset zoom",
+    keys: [["Cmd", "0"]],
+    defaults: [["Cmd", "0"]],
+  },
+  "canvas-preview": {
+    id: "canvas-preview",
+    category: "Canvas",
+    label: "Toggle preview",
+    description: "Show or hide the live preview",
+    keys: [["Cmd", "Shift", "P"]],
+    defaults: [["Cmd", "Shift", "P"]],
+  },
+};
 
 export const DEFAULT_SETTINGS: AppSettings = {
   onboarded: false,
@@ -201,6 +341,8 @@ Made with care. Open source. Local first.`,
   includeSourceMaps: true,
   exportOutputDir: null,
   autoOpenAfterExport: true,
+  // ── Keyboard defaults ──
+  keyboardShortcuts: DEFAULT_KEYBOARD_SHORTCUTS,
 };
 
 /** Settings tab identifiers (mirrors `Section` in Settings.tsx). */
@@ -208,6 +350,7 @@ export type SettingsSection =
   | "general"
   | "appearance"
   | "editor"
+  | "keyboard"
   | "export"
   | "runtime"
   | "updates"

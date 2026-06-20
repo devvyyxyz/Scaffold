@@ -1,6 +1,16 @@
 import { ReactNode, useEffect, useState } from "react";
 import { Button } from "./Button";
+import { Icon, IconName } from "./Icon";
 import "./ConfirmDialog.css";
+
+export type ConfirmTone = "default" | "danger" | "success" | "warning";
+
+const TONE_ICONS: Record<ConfirmTone, IconName> = {
+  default: "sparkles",
+  danger: "trash",
+  success: "check",
+  warning: "alert-triangle",
+};
 
 interface ConfirmDialogProps {
   open: boolean;
@@ -8,8 +18,10 @@ interface ConfirmDialogProps {
   message: ReactNode;
   confirmLabel: string;
   cancelLabel?: string;
-  /** "danger" styles the confirm button destructively (red). */
-  tone?: "default" | "danger";
+  /** Visual tone: controls accent colour, icon box background, and default icon. */
+  tone?: ConfirmTone;
+  /** Override the auto-selected icon for the tone. */
+  icon?: IconName;
   onConfirm: () => Promise<void> | void;
   onCancel: () => void;
 }
@@ -21,6 +33,7 @@ export function ConfirmDialog({
   confirmLabel,
   cancelLabel = "Cancel",
   tone = "default",
+  icon,
   onConfirm,
   onCancel,
 }: ConfirmDialogProps) {
@@ -58,6 +71,8 @@ export function ConfirmDialog({
     }
   };
 
+  const resolvedIcon = icon ?? TONE_ICONS[tone];
+
   return (
     <div className="confirmOverlay" onClick={() => !busy && onCancel()}>
       <div
@@ -67,9 +82,20 @@ export function ConfirmDialog({
         aria-labelledby="confirmTitle"
         onClick={(e) => e.stopPropagation()}
       >
-        <h2 id="confirmTitle" className="confirmTitle">{title}</h2>
-        <div className="confirmMessage">{message}</div>
-        {error && <div className="confirmError">{error}</div>}
+        <div className={`confirmAccent tone-${tone}`} />
+
+        <div className="confirmIconRow">
+          <div className={`confirmIconBox tone-${tone}`}>
+            <Icon name={resolvedIcon} size={22} />
+          </div>
+          <h2 id="confirmTitle" className="confirmTitle">{title}</h2>
+        </div>
+
+        <div className="confirmBody">
+          <p className="confirmMessage">{message}</p>
+          {error && <div className="confirmError">{error}</div>}
+        </div>
+
         <div className="confirmActions">
           <Button variant="ghost" onClick={onCancel} disabled={busy}>
             {cancelLabel}

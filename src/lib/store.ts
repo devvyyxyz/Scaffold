@@ -9,6 +9,8 @@ import { load } from "@tauri-apps/plugin-store";
 import {
   AppSettings,
   DEFAULT_SETTINGS,
+  DEFAULT_KEYBOARD_SHORTCUTS,
+  KeyboardShortcuts,
   Project,
   Route,
   ThemePref,
@@ -66,6 +68,7 @@ interface AppState {
   setSidebarWidth: (px: number) => Promise<void>;
   toggleSidebar: () => Promise<void>;
   setDashboardView: (view: "grid" | "list") => Promise<void>;
+  setKeyboardShortcuts: (shortcuts: KeyboardShortcuts) => Promise<void>;
 }
 
 async function readStore() {
@@ -73,12 +76,40 @@ async function readStore() {
   return await load(STORE_FILE, { autoSave: false, defaults: {} });
 }
 
+/**
+ * Merge saved shortcut bindings over the built-in defaults.
+ *
+ * Metadata (label, description, category, defaults) always comes from
+ * DEFAULT_KEYBOARD_SHORTCUTS so stale entries from an older version can't
+ * outlive a schema change; only the user's customised `keys` are kept.
+ * Newly-added shortcuts (absent from the saved blob) fall through to defaults.
+ */
+function mergeKeyboardShortcuts(
+  saved: Partial<KeyboardShortcuts> | undefined,
+): KeyboardShortcuts {
+  const merged: KeyboardShortcuts = {};
+  for (const [id, def] of Object.entries(DEFAULT_KEYBOARD_SHORTCUTS)) {
+    const s = saved?.[id];
+    merged[id] = {
+      ...def,
+      keys: Array.isArray(s?.keys) && s!.keys.length
+        ? s!.keys.map((c) => [...c])
+        : def.keys.map((c) => [...c]),
+    };
+  }
+  return merged;
+}
+
 async function loadSettings(): Promise<AppSettings> {
   try {
     const store = await readStore();
     if (!store) return { ...DEFAULT_SETTINGS };
     const saved = (await store.get<Partial<AppSettings>>("settings")) ?? {};
-    return { ...DEFAULT_SETTINGS, ...saved };
+    return {
+      ...DEFAULT_SETTINGS,
+      ...saved,
+      keyboardShortcuts: mergeKeyboardShortcuts(saved.keyboardShortcuts),
+    };
   } catch {
     // If the store plugin is unavailable (e.g., permission denied in a
     // sub-window before capabilities are updated), fall back to defaults
@@ -209,6 +240,12 @@ export const useAppStore = create<AppState>((set, get) => ({
 
   async setDashboardView(view) {
     const settings = { ...get().settings, dashboardView: view };
+    set({ settings });
+    await saveSettings(settings);
+  },
+
+  async setKeyboardShortcuts(keyboardShortcuts) {
+    const settings = { ...get().settings, keyboardShortcuts };
     set({ settings });
     await saveSettings(settings);
   },

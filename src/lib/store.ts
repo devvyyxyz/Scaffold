@@ -6,6 +6,7 @@
 
 import { create } from "zustand";
 import { load } from "@tauri-apps/plugin-store";
+import { appLocalDataDir } from "@tauri-apps/api/path";
 import {
   AppSettings,
   DEFAULT_SETTINGS,
@@ -19,7 +20,17 @@ import { isTauri, isOnboardingWindow, showOnboardingWindow } from "./ipc";
 import { clearProjectCache, purgeExpiredArchives, unloadProject } from "./projects";
 
 const STORE_FILE = "settings.json";
-const SHARED_SETTINGS_PATH = "settings.json"; // Shared between all windows
+let SETTINGS_FILE_PATH: string | null = null;
+
+/** Get the absolute path to the settings file in the app data directory */
+async function getSettingsFilePath(): Promise<string> {
+  if (!SETTINGS_FILE_PATH) {
+    const appDataDir = await appLocalDataDir();
+    SETTINGS_FILE_PATH = `${appDataDir}settings.json`;
+    console.log("Settings file path:", SETTINGS_FILE_PATH);
+  }
+  return SETTINGS_FILE_PATH;
+}
 
 /** Sidebar resize bounds (px). */
 export const SIDEBAR_MIN = 200;
@@ -125,7 +136,8 @@ function mergeKeyboardShortcuts(
 async function loadSettings(): Promise<AppSettings> {
   try {
     // Try loading from file first (most reliable across windows)
-    const settingsJson = await fsReadTextFile("settings.json");
+    const settingsPath = await getSettingsFilePath();
+    const settingsJson = await fsReadTextFile(settingsPath);
     if (settingsJson) {
       const saved = JSON.parse(settingsJson) as Partial<AppSettings>;
       console.log("Loaded settings from file:", saved);
@@ -134,7 +146,7 @@ async function loadSettings(): Promise<AppSettings> {
         ...saved,
         keyboardShortcuts: mergeKeyboardShortcuts(saved.keyboardShortcuts),
       };
-      console.log("Merged settings from file:", result);
+      console.log("Merged settings from file, onboarded:", result.onboarded);
       return result;
     }
   } catch (error) {
@@ -166,9 +178,10 @@ async function loadSettings(): Promise<AppSettings> {
 async function saveSettings(settings: AppSettings): Promise<void> {
   try {
     // Save to file first (most reliable across windows)
+    const settingsPath = await getSettingsFilePath();
     const settingsJson = JSON.stringify(settings, null, 2);
-    await fsWriteTextFile("settings.json", settingsJson);
-    console.log("Settings saved to file, onboarded:", settings.onboarded);
+    await fsWriteTextFile(settingsPath, settingsJson);
+    console.log("Settings saved to file at:", settingsPath, "onboarded:", settings.onboarded);
     
     // Also save to store plugin as backup
     try {
@@ -184,7 +197,7 @@ async function saveSettings(settings: AppSettings): Promise<void> {
     
     // Verify the file save
     await new Promise(resolve => setTimeout(resolve, 100));
-    const verify = await fsReadTextFile("settings.json");
+    const verify = await fsReadTextFile(settingsPath);
     if (verify) {
       const verifyParsed = JSON.parse(verify);
       console.log("Verification - read back from file, onboarded:", verifyParsed.onboarded);

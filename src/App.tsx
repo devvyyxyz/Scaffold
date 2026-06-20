@@ -4,6 +4,7 @@ import { isOnboardingWindow, isDocsWindow } from "./lib/ipc";
 import { isEditableTarget, matchesShortcut } from "./lib/keyboard";
 import { AppShell } from "./components/shell/AppShell";
 import { BootScreen } from "./components/shell/BootScreen";
+import { ErrorBoundary } from "./components/ErrorBoundary";
 import { Onboarding } from "./screens/Onboarding";
 import { Dashboard } from "./screens/Dashboard";
 import { NewProjectWizard } from "./screens/NewProjectWizard";
@@ -138,11 +139,13 @@ export default function App() {
   const screen = renderRoute(route);
 
   return (
-    <AppShell>
-      {screen}
-      <CommandPalette open={paletteOpen} onClose={() => setPaletteOpen(false)} />
-      <KeyboardShortcutsOverlay open={shortcutsOverlayOpen} onClose={() => setShortcutsOverlayOpen(false)} />
-    </AppShell>
+    <ErrorBoundary>
+      <AppShell>
+        {screen}
+        <CommandPalette open={paletteOpen} onClose={() => setPaletteOpen(false)} />
+        <KeyboardShortcutsOverlay open={shortcutsOverlayOpen} onClose={() => setShortcutsOverlayOpen(false)} />
+      </AppShell>
+    </ErrorBoundary>
   );
 }
 
@@ -164,7 +167,34 @@ function renderRoute(route: ReturnType<typeof useAppStore.getState>["route"]) {
       return <Plugins />;
     case "settings":
       return <Settings />;
+    case "error-demo":
+      return <ErrorDemo />;
     default:
       return <Dashboard />;
   }
+}
+
+function ErrorDemo() {
+  const navigate = useAppStore((s) => s.navigate);
+  return (
+    <div className="screen">
+      <div className="screenHeader">
+        <div>
+          <h1 className="screenTitle">Error Screen Preview</h1>
+          <p className="screenSub">This is a preview of the error boundary screen.</p>
+        </div>
+      </div>
+      <div style={{ display: "flex", gap: "var(--sp-3)" }}>
+        <Button variant="primary" icon="alert-triangle" onClick={() => navigate({ name: "error-demo", triggerError: true })}>
+          Trigger ReferenceError
+        </Button>
+        <Button variant="secondary" onClick={() => navigate({ name: "error-demo", triggerError: "type" })}>
+          Trigger TypeError
+        </Button>
+        <Button variant="ghost" onClick={() => navigate({ name: "dashboard" })}>
+          Back to dashboard
+        </Button>
+      </div>
+    </div>
+  );
 }

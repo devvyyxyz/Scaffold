@@ -384,7 +384,12 @@ export function Settings() {
                     <option value="trace">Trace</option>
                   </Select>
                 </SettingRow>
-                <p className="hint" style={{ marginTop: "var(--sp-2)" }}>
+                <SettingRow title="Error screen preview" desc="Preview the error boundary screen that appears when the app crashes.">
+                  <Button variant="secondary" size="sm" icon="alert-triangle" onClick={() => navigate({ name: "error-demo" })}>
+                    Preview error screen
+                  </Button>
+                </SettingRow>
+                <p className="hint" style={{ marginTop: "var(--sp-3)" }}>
                   Developer tooling (logging wiring, DevTools control, backend log routing) is not yet hooked up — these options will activate in a later phase.
                 </p>
               </SettingSection>

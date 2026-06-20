@@ -124,6 +124,25 @@ function mergeKeyboardShortcuts(
 
 async function loadSettings(): Promise<AppSettings> {
   try {
+    // Try loading from file first (most reliable across windows)
+    const settingsJson = await fsReadTextFile("settings.json");
+    if (settingsJson) {
+      const saved = JSON.parse(settingsJson) as Partial<AppSettings>;
+      console.log("Loaded settings from file:", saved);
+      const result = {
+        ...DEFAULT_SETTINGS,
+        ...saved,
+        keyboardShortcuts: mergeKeyboardShortcuts(saved.keyboardShortcuts),
+      };
+      console.log("Merged settings from file:", result);
+      return result;
+    }
+  } catch (error) {
+    console.error("Failed to load settings from file:", error);
+  }
+
+  // Fallback to store plugin
+  try {
     const store = await readStore();
     if (!store) {
       console.log("No store available, using defaults");
@@ -136,40 +155,40 @@ async function loadSettings(): Promise<AppSettings> {
       ...saved,
       keyboardShortcuts: mergeKeyboardShortcuts(saved.keyboardShortcuts),
     };
-    console.log("Merged settings:", result);
+    console.log("Merged settings from store:", result);
     return result;
   } catch (error) {
-    console.error("Failed to load settings:", error);
-    // If the store plugin is unavailable (e.g., permission denied in a
-    // sub-window before capabilities are updated), fall back to defaults
-    // so the app doesn't hang on the boot screen forever.
+    console.error("Failed to load settings from store:", error);
     return { ...DEFAULT_SETTINGS };
   }
 }
 
 async function saveSettings(settings: AppSettings): Promise<void> {
   try {
-    const store = await readStore();
-    if (!store) {
-      console.error("Failed to save settings: store not available");
-      return;
+    // Save to file first (most reliable across windows)
+    const settingsJson = JSON.stringify(settings, null, 2);
+    await fsWriteTextFile("settings.json", settingsJson);
+    console.log("Settings saved to file, onboarded:", settings.onboarded);
+    
+    // Also save to store plugin as backup
+    try {
+      const store = await readStore();
+      if (store) {
+        await store.set("settings", settings);
+        await store.save();
+        console.log("Settings also saved to store");
+      }
+    } catch (storeError) {
+      console.error("Failed to save to store (file save succeeded):", storeError);
     }
-    console.log("Saving settings to store:", settings);
-    await store.set("settings", settings);
-    await store.save();
-    console.log("Settings saved successfully, onboarded:", settings.onboarded);
     
-    // Small delay to ensure save completes
+    // Verify the file save
     await new Promise(resolve => setTimeout(resolve, 100));
-    
-    // Verify the save by reading back from a fresh store instance
-    const verifyStore = await load(SHARED_SETTINGS_PATH, { 
-      autoSave: false, 
-      defaults: {},
-      path: "app-data"
-    });
-    const verify = await verifyStore.get<Partial<AppSettings>>("settings");
-    console.log("Verification - read back from store:", verify);
+    const verify = await fsReadTextFile("settings.json");
+    if (verify) {
+      const verifyParsed = JSON.parse(verify);
+      console.log("Verification - read back from file, onboarded:", verifyParsed.onboarded);
+    }
   } catch (error) {
     console.error("Failed to save settings:", error);
     // Settings are in-memory until the next save attempt.

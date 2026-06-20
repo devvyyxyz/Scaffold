@@ -1,6 +1,6 @@
 [package]
 name = "scaffold"
-version = "0.1.0"
+version = "0.2.0"
 description = "Local-first visual React site builder"
 authors = ["Scaffold"]
 edition = "2021"

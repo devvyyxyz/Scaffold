@@ -125,7 +125,6 @@ export function Dashboard() {
                   key={p.id}
                   project={p}
                   onOpen={() => navigate({ name: "editor", projectId: p.id })}
-                  onChanged={reload}
                 />
               ))}
             </div>
@@ -146,31 +145,10 @@ export function Dashboard() {
 function ProjectCard({
   project,
   onOpen,
-  onChanged,
 }: {
   project: Project;
   onOpen: () => void;
-  onChanged: () => void;
 }) {
-  const [confirming, setConfirming] = useState(false);
-  const [duplicating, setDuplicating] = useState(false);
-
-  const handleArchive = async () => {
-    await archiveProject(project.id);
-    setConfirming(false);
-    onChanged();
-  };
-
-  const handleDuplicate = async () => {
-    setDuplicating(true);
-    try {
-      await duplicateProject(project.id);
-      onChanged();
-    } finally {
-      setDuplicating(false);
-    }
-  };
-
   return (
     <div className="projectCard">
       <div className="projectThumb" onClick={onOpen}>
@@ -193,49 +171,7 @@ function ProjectCard({
         <span className="faint mono projectPath" title={project.path}>
           {basename(project.path)}
         </span>
-        <div className="projectActions">
-          <Button
-            variant="ghost"
-            size="sm"
-            icon="external"
-            onClick={() => revealProject(project.path)}
-          >
-            Show in Folder
-          </Button>
-          <Button
-            variant="ghost"
-            size="sm"
-            icon="copy"
-            disabled={duplicating}
-            onClick={handleDuplicate}
-          >
-            Duplicate
-          </Button>
-          <Button
-            variant="ghost"
-            size="sm"
-            icon="archive"
-            onClick={() => setConfirming(true)}
-          >
-            Archive
-          </Button>
-        </div>
       </div>
-
-      <ConfirmDialog
-        open={confirming}
-        title={`Archive "${project.name}"?`}
-        message={
-          <>
-            It will be moved to the Archive and permanently deleted in{" "}
-            {ARCHIVE_RETENTION_DAYS} days. You can restore it any time before then.
-          </>
-        }
-        confirmLabel="Archive"
-        tone="default"
-        onConfirm={handleArchive}
-        onCancel={() => setConfirming(false)}
-      />
     </div>
   );
 }

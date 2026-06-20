@@ -3,6 +3,7 @@ import { open as openDialog } from "@tauri-apps/plugin-dialog";
 import { useEffect, useMemo, useState } from "react";
 import { useAppStore } from "../lib/store";
 import { isTauri } from "../lib/ipc";
+import { getCacheStats } from "../lib/projects";
 import { AppSettings, ThemePref, AutoSaveInterval, CanvasZoom, SettingsSection, DEFAULT_KEYBOARD_SHORTCUTS, KeyboardShortcut } from "../lib/types";
 import { Button } from "../components/ui/Button";
 import { Select } from "../components/ui/Field";
@@ -63,6 +64,7 @@ export function Settings() {
   const setSection = (id: Section) => navigate({ name: "settings", section: id });
 
   const [previewModal, setPreviewModal] = useState<string | null>(null);
+  const [cacheStats, setCacheStats] = useState({ projectsCached: false, manifestsCached: 0 });
   const set = <K extends keyof AppSettings>(key: K, value: AppSettings[K]) =>
     useAppStore.setState((s) => ({ settings: { ...s.settings, [key]: value } }));
 
@@ -93,8 +95,16 @@ export function Settings() {
     );
     if (confirmed) {
       await clearCache();
+      setCacheStats(getCacheStats());
     }
   }
+
+  // Update cache stats periodically and after clear.
+  useEffect(() => {
+    setCacheStats(getCacheStats());
+    const interval = setInterval(() => setCacheStats(getCacheStats()), 5000);
+    return () => clearInterval(interval);
+  }, []);
 
   const navItems = settings.developerMode ? [...SECTIONS, DEV_SECTION] : SECTIONS;
   const activeLabel = navItems.find((s) => s.id === section)?.label ?? "Settings";
@@ -329,7 +339,9 @@ export function Settings() {
                   <span className="mono" style={{ fontSize: "var(--fs-sm)" }}>not bundled yet</span>
                 </SettingRow>
                 <SettingRow title="Cache size">
-                  <span className="mono" style={{ fontSize: "var(--fs-sm)" }}>—</span>
+                  <span className="mono" style={{ fontSize: "var(--fs-sm)" }}>
+                    {cacheStats.projectsCached ? `${cacheStats.manifestsCached} manifests` : "empty"}
+                  </span>
                 </SettingRow>
                 <SettingRow title="Clear cache" desc="Remove cached build artifacts." comingSoon>
                   <Button variant="ghost" size="sm" icon="check" disabled>Clear cache</Button>

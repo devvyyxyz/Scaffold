@@ -51,6 +51,14 @@ export function clearProjectCache(): void {
   manifestCache.clear();
 }
 
+/** Get cache statistics for display in settings. */
+export function getCacheStats(): { projectsCached: boolean; manifestsCached: number } {
+  return {
+    projectsCached: cachedProjects !== null,
+    manifestsCached: manifestCache.size,
+  };
+}
+
 /** Archived projects older than this are purged on startup. */
 export const ARCHIVE_RETENTION_DAYS = 30;
 const ARCHIVE_RETENTION_MS = ARCHIVE_RETENTION_DAYS * 24 * 60 * 60 * 1000;

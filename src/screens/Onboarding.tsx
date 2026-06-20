@@ -84,10 +84,10 @@ export function Onboarding() {
       defaultTemplate,
       language,
       telemetry,
-      pageTitlePrefix: "",
-      metaDescriptionTemplate: "{{page}} — Built with Scaffold",
       autoSaveInterval,
       showWelcomeScreen,
+      pageTitlePrefix: "",
+      metaDescriptionTemplate: "{{page}} — Built with Scaffold",
     };
   }
 

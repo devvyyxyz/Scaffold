@@ -82,7 +82,14 @@ interface AppState {
 
 async function readStore() {
   if (!isTauri()) return null;
-  return await load(STORE_FILE, { autoSave: false, defaults: {} });
+  try {
+    const store = await load(STORE_FILE, { autoSave: false, defaults: {} });
+    console.log("Store loaded successfully from:", STORE_FILE);
+    return store;
+  } catch (error) {
+    console.error("Failed to load store:", error);
+    return null;
+  }
 }
 
 /**
@@ -141,9 +148,14 @@ async function saveSettings(settings: AppSettings): Promise<void> {
       console.error("Failed to save settings: store not available");
       return;
     }
+    console.log("Saving settings to store:", settings);
     await store.set("settings", settings);
     await store.save();
-    console.log("Settings saved successfully:", settings);
+    console.log("Settings saved successfully, onboarded:", settings.onboarded);
+    
+    // Verify the save by reading back
+    const verify = await store.get<Partial<AppSettings>>("settings");
+    console.log("Verification - read back from store:", verify);
   } catch (error) {
     console.error("Failed to save settings:", error);
     // Settings are in-memory until the next save attempt.

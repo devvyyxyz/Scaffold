@@ -32,6 +32,25 @@ const REGISTRY_KEY = "projectRegistry";
 const MANIFEST_DIR = ".scaffold";
 const MANIFEST_FILE = "manifest.json";
 
+// ---------------------------------------------------------------------------
+// Simple in-memory caches (cleared on demand or on explicit invalidation)
+// ---------------------------------------------------------------------------
+
+/** Cached project list — avoids re-reading the store on every render. */
+let cachedProjects: Project[] | null = null;
+let cacheTimestamp = 0;
+const CACHE_TTL_MS = 30_000; // 30 seconds
+
+/** Cached manifest reads keyed by project path. */
+const manifestCache = new Map<string, { manifest: ProjectManifest | null; ts: number }>();
+const MANIFEST_CACHE_TTL_MS = 10_000; // 10 seconds
+
+export function clearProjectCache(): void {
+  cachedProjects = null;
+  cacheTimestamp = 0;
+  manifestCache.clear();
+}
+
 /** Archived projects older than this are purged on startup. */
 export const ARCHIVE_RETENTION_DAYS = 30;
 const ARCHIVE_RETENTION_MS = ARCHIVE_RETENTION_DAYS * 24 * 60 * 60 * 1000;
@@ -284,17 +303,28 @@ export async function createProject(input: {
   return project;
 }
 
-/** Read the manifest from a project folder, if present. */
+/** Read the manifest from a project folder, if present. Uses cache. */
 export async function readManifest(
   projectPath: string
 ): Promise<ProjectManifest | null> {
   if (!isTauri()) return null;
+  const now = Date.now();
+  const cached = manifestCache.get(projectPath);
+  if (cached && now - cached.ts < MANIFEST_CACHE_TTL_MS) {
+    return cached.manifest;
+  }
   const manifestPath = await joinPath(projectPath, MANIFEST_DIR, MANIFEST_FILE);
-  if (!(await fsExists(manifestPath))) return null;
+  if (!(await fsExists(manifestPath))) {
+    manifestCache.set(projectPath, { manifest: null, ts: now });
+    return null;
+  }
   try {
     const raw = await fsReadTextFile(manifestPath);
-    return JSON.parse(raw) as ProjectManifest;
+    const manifest = JSON.parse(raw) as ProjectManifest;
+    manifestCache.set(projectPath, { manifest, ts: now });
+    return manifest;
   } catch {
+    manifestCache.set(projectPath, { manifest: null, ts: now });
     return null;
   }
 }
@@ -326,9 +356,16 @@ function freshManifest(project: Project): ProjectManifest {
   };
 }
 
-/** List all projects recorded in the registry. */
+/** List all projects recorded in the registry. Uses in-memory cache when fresh. */
 export async function listProjects(): Promise<Project[]> {
-  return await readRegistry();
+  const now = Date.now();
+  if (cachedProjects && now - cacheTimestamp < CACHE_TTL_MS) {
+    return cachedProjects;
+  }
+  const projects = await readRegistry();
+  cachedProjects = projects;
+  cacheTimestamp = now;
+  return projects;
 }
 
 /** Add or replace a project in the registry. */

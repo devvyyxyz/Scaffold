@@ -54,6 +54,7 @@ export function Settings() {
   const setTheme = useAppStore((s) => s.setTheme);
   const setDefaultProjectDir = useAppStore((s) => s.setDefaultProjectDir);
   const resetOnboarding = useAppStore((s) => s.resetOnboarding);
+  const clearCache = useAppStore((s) => s.clearCache);
 
   // Active section is driven by the route so the command palette can deep-link
   // to a specific tab. Falls back to "general" when navigated to directly.
@@ -84,6 +85,15 @@ export function Settings() {
       "This will restart the onboarding wizard.\n\nSome settings (like theme and default project directory) may be reset to their defaults. Your existing projects will not be affected."
     );
     if (confirmed) resetOnboarding();
+  }
+
+  async function handleClearCache() {
+    const confirmed = window.confirm(
+      "Clear in-memory cache?\n\nThis will force the app to reload all project data from disk. The app may briefly pause while data is refreshed."
+    );
+    if (confirmed) {
+      await clearCache();
+    }
   }
 
   const navItems = settings.developerMode ? [...SECTIONS, DEV_SECTION] : SECTIONS;
@@ -450,6 +460,12 @@ export function Settings() {
                     )}
                   </div>
                 )}
+
+                <SettingRow title="Clear cache" desc="Clear in-memory caches for projects and manifests. The app will reload data from disk.">
+                  <Button variant="ghost" size="sm" icon="trash" onClick={handleClearCache}>
+                    Clear cache
+                  </Button>
+                </SettingRow>
 
                 <p className="hint" style={{ marginTop: "var(--sp-3)" }}>
                   Developer tooling (logging wiring, DevTools control, backend log routing) is not yet hooked up — these options will activate in a later phase.

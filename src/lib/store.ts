@@ -16,7 +16,7 @@ import {
   ThemePref,
 } from "./types";
 import { isTauri, isOnboardingWindow, showOnboardingWindow } from "./ipc";
-import { purgeExpiredArchives, unloadProject } from "./projects";
+import { clearProjectCache, purgeExpiredArchives, unloadProject } from "./projects";
 
 const STORE_FILE = "settings.json";
 
@@ -77,6 +77,7 @@ interface AppState {
   /** Replace the current project id without side-effects (used by Editor after
    *  the project is actually loaded). Callers should normally use `navigate`. */
   _setCurrentProjectId: (id: string | null) => void;
+  clearCache: () => Promise<void>;
 }
 
 async function readStore() {
@@ -281,6 +282,13 @@ export const useAppStore = create<AppState>((set, get) => ({
 
   _setCurrentProjectId(id) {
     set({ currentProjectId: id });
+  },
+
+  async clearCache() {
+    clearProjectCache();
+    // Also reload projects from disk to refresh the store.
+    const projects = await readRegistry();
+    set({ projects });
   },
 }));
 

@@ -11,6 +11,7 @@ import { Segmented } from "../components/ui/Field";
 import { Icon, IconName } from "../components/ui/Icon";
 import { Logo } from "../components/ui/Logo";
 import { Toggle } from "../components/ui/Toggle";
+import { ConfirmDialog } from "../components/ui/ConfirmDialog";
 import { SettingSection, SettingRow } from "../components/ui/Setting";
 import "./screens.css";
 import "./SettingsKeyboard.css";

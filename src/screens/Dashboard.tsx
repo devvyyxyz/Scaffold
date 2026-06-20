@@ -1,12 +1,15 @@
 import { useEffect, useState } from "react";
+import { Command } from "@tauri-apps/plugin-shell";
 import { useAppStore } from "../lib/store";
 import {
   ARCHIVE_RETENTION_DAYS,
   archiveProject,
+  duplicateProject,
   listProjects,
   formatRelative,
 } from "../lib/projects";
 import { basename } from "../lib/paths";
+import { isTauri } from "../lib/ipc";
 import { EmptyState } from "../components/EmptyState";
 import { Button } from "../components/ui/Button";
 import { Icon } from "../components/ui/Icon";
@@ -14,16 +17,23 @@ import { ConfirmDialog } from "../components/ui/ConfirmDialog";
 import { Project, ProjectStack, ProjectTemplate } from "../lib/types";
 import "./screens.css";
 
+/** Reveal a project folder in the OS file manager (Finder/Explorer). */
+function revealProject(path: string) {
+  if (isTauri()) Command.create("open", [path]).execute();
+}
+
 export function Dashboard() {
   const navigate = useAppStore((s) => s.navigate);
   const setProjects = useAppStore((s) => s.setProjects);
   const settings = useAppStore((s) => s.settings);
+  const setDashboardView = useAppStore((s) => s.setDashboardView);
 
   // Read the stable projects reference, then filter in the render body.
   // Filtering inside the selector would return a new array each render and
   // crash React's useSyncExternalStore ("getSnapshot should be cached").
   const projects = useAppStore((s) => s.projects);
   const active = projects.filter((p) => !p.archived);
+  const view = settings.dashboardView;
 
   const reload = () => {
     listProjects().then(setProjects);
@@ -45,9 +55,33 @@ export function Dashboard() {
               : "Create your first visual React site."}
           </p>
         </div>
-        <Button variant="primary" icon="plus" onClick={() => navigate({ name: "new-project" })}>
-          New Project
-        </Button>
+        <div className="screenHeaderActions">
+          {active.length > 0 && (
+            <div className="viewToggle" role="group" aria-label="Project view">
+              <button
+                type="button"
+                className={`viewToggleBtn ${view === "grid" ? "active" : ""}`}
+                onClick={() => setDashboardView("grid")}
+                aria-pressed={view === "grid"}
+                title="Grid view"
+              >
+                <Icon name="grid" size={16} />
+              </button>
+              <button
+                type="button"
+                className={`viewToggleBtn ${view === "list" ? "active" : ""}`}
+                onClick={() => setDashboardView("list")}
+                aria-pressed={view === "list"}
+                title="List view"
+              >
+                <Icon name="list" size={16} />
+              </button>
+            </div>
+          )}
+          <Button variant="primary" icon="plus" onClick={() => navigate({ name: "new-project" })}>
+            New Project
+          </Button>
+        </div>
       </div>
 
       {active.length === 0 ? (
@@ -61,6 +95,17 @@ export function Dashboard() {
             </Button>
           }
         />
+      ) : view === "list" ? (
+        <div className="projectList">
+          {active.map((p) => (
+            <ProjectRow
+              key={p.id}
+              project={p}
+              onOpen={() => navigate({ name: "editor", projectId: p.id })}
+              onChanged={reload}
+            />
+          ))}
+        </div>
       ) : (
         <div className="projectGrid">
           {active.map((p) => (
@@ -94,11 +139,22 @@ function ProjectCard({
   onChanged: () => void;
 }) {
   const [confirming, setConfirming] = useState(false);
+  const [duplicating, setDuplicating] = useState(false);
 
   const handleArchive = async () => {
     await archiveProject(project.id);
     setConfirming(false);
     onChanged();
+  };
+
+  const handleDuplicate = async () => {
+    setDuplicating(true);
+    try {
+      await duplicateProject(project.id);
+      onChanged();
+    } finally {
+      setDuplicating(false);
+    }
   };
 
   return (
@@ -127,12 +183,126 @@ function ProjectCard({
           <Button
             variant="ghost"
             size="sm"
+            icon="external"
+            onClick={() => revealProject(project.path)}
+          >
+            Show in Folder
+          </Button>
+          <Button
+            variant="ghost"
+            size="sm"
+            icon="copy"
+            disabled={duplicating}
+            onClick={handleDuplicate}
+          >
+            Duplicate
+          </Button>
+          <Button
+            variant="ghost"
+            size="sm"
             icon="archive"
             onClick={() => setConfirming(true)}
           >
             Archive
           </Button>
         </div>
+      </div>
+
+      <ConfirmDialog
+        open={confirming}
+        title={`Archive "${project.name}"?`}
+        message={
+          <>
+            It will be moved to the Archive and permanently deleted in{" "}
+            {ARCHIVE_RETENTION_DAYS} days. You can restore it any time before then.
+          </>
+        }
+        confirmLabel="Archive"
+        tone="default"
+        onConfirm={handleArchive}
+        onCancel={() => setConfirming(false)}
+      />
+    </div>
+  );
+}
+
+function ProjectRow({
+  project,
+  onOpen,
+  onChanged,
+}: {
+  project: Project;
+  onOpen: () => void;
+  onChanged: () => void;
+}) {
+  const [confirming, setConfirming] = useState(false);
+  const [duplicating, setDuplicating] = useState(false);
+
+  const handleArchive = async () => {
+    await archiveProject(project.id);
+    setConfirming(false);
+    onChanged();
+  };
+
+  const handleDuplicate = async () => {
+    setDuplicating(true);
+    try {
+      await duplicateProject(project.id);
+      onChanged();
+    } finally {
+      setDuplicating(false);
+    }
+  };
+
+  return (
+    <div className="projectRow">
+      <div className="projectRowThumb" onClick={onOpen}>
+        <img
+          src={project.bannerPath || "/Scaffold/banner.png"}
+          alt=""
+          onError={(e) => {
+            (e.currentTarget as HTMLImageElement).style.display = "none";
+          }}
+        />
+      </div>
+      <div className="projectRowMain" onClick={onOpen}>
+        <span className="projectRowName">{project.name}</span>
+        <span className="projectRowPath mono" title={project.path}>
+          {basename(project.path)}
+        </span>
+      </div>
+      <div className="projectRowMeta">
+        <span className="stackBadge">{project.stack}</span>
+        <span className="projectRowEdited">
+          {formatRelative(project.lastEditedAt ?? project.updatedAt)}
+        </span>
+      </div>
+      <div className="projectRowActions">
+        <Button
+          variant="ghost"
+          size="sm"
+          icon="external"
+          onClick={() => revealProject(project.path)}
+          title="Show in Folder"
+          aria-label={`Show ${project.name} in folder`}
+        />
+        <Button
+          variant="ghost"
+          size="sm"
+          icon="copy"
+          disabled={duplicating}
+          onClick={handleDuplicate}
+          title="Duplicate"
+          aria-label={`Duplicate ${project.name}`}
+        />
+        <Button
+          variant="ghost"
+          size="sm"
+          icon="archive"
+          onClick={() => setConfirming(true)}
+          title="Archive"
+          aria-label={`Archive ${project.name}`}
+        />
       </div>
 
       <ConfirmDialog

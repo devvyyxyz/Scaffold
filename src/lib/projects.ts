@@ -17,6 +17,7 @@ import {
   fsWriteTextFile,
   fsRemove,
   fsMoveDir,
+  fsCopyDir,
 } from "./ipc";
 import { archiveDir, basename, defaultProjectDir, joinPath } from "./paths";
 import {
@@ -46,7 +47,7 @@ async function withStore<T>(
   fn: (store: Awaited<ReturnType<typeof load>>) => Promise<T>
 ): Promise<T | null> {
   if (!isTauri()) return null;
-  const store = await load(STORE_FILE, { autoSave: false });
+  const store = await load(STORE_FILE, { autoSave: false, defaults: {} });
   return await fn(store);
 }
 
@@ -77,7 +78,7 @@ function dirnameSafe(p: string): string | null {
 export async function scaffoldProjectFiles(project: Project): Promise<void> {
   if (!isTauri()) return;
 
-  const { path: projectPath, stack, template, name } = project;
+  const { path: projectPath, template, name } = project;
   const srcDir = await joinPath(projectPath, "src");
 
   // ── Common files ──
@@ -428,6 +429,84 @@ export async function restoreProject(id: string): Promise<void> {
       : p
   );
   await writeRegistry(updated);
+}
+
+/** Duplicate a project: copies its folder and registers the copy with a new
+ *  id + name. The on-disk manifest of the copy is rewritten to match its new
+ *  identity. Files on disk are duplicated; nothing in the original changes.
+ *  Returns the newly created project, or null in browser/demo mode. */
+export async function duplicateProject(id: string): Promise<Project | null> {
+  const projects = await readRegistry();
+  const project = projects.find((p) => p.id === id);
+  if (!project) throw new Error(`Project not found: ${id}`);
+
+  // New folder: sibling of the original, with a "copy" suffix, de-duplicated.
+  const parent = dirnameSafe(project.path) ?? (await defaultProjectDir());
+  const baseName = basename(project.path);
+  const newPath = await uniquePath(parent, `${baseName}-copy`);
+
+  // New registry entry: fresh id, name suffixed and de-duplicated vs siblings.
+  const newName = uniqueName(project.name, projects);
+  const now = Date.now();
+  const copy: Project = {
+    ...project,
+    id: uid(),
+    name: newName,
+    path: newPath,
+    createdAt: now,
+    updatedAt: now,
+    // The duplicate has never been opened in the editor of its own accord.
+    lastEditedAt: null,
+    // A duplicate is never archived.
+    archived: undefined,
+    archivedAt: undefined,
+    archivedFrom: undefined,
+  };
+
+  if (isTauri()) {
+    // Copy the folder tree first; if this throws we leave the registry alone.
+    await fsMkdir(parent);
+    await fsCopyDir(project.path, newPath);
+
+    // Rewrite the copied manifest so it owns its new identity.
+    const existing = await readManifest(newPath);
+    const manifest: ProjectManifest = existing
+      ? {
+          ...existing,
+          id: copy.id,
+          name: copy.name,
+          createdAt: now,
+          updatedAt: now,
+        }
+      : freshManifest(copy);
+    await writeManifest(newPath, manifest);
+  }
+
+  await registerProject(copy);
+  return copy;
+}
+
+/** Pick a non-colliding folder path inside `parent` from a base name. */
+async function uniquePath(parent: string, baseName: string): Promise<string> {
+  let candidate = await joinPath(parent, baseName);
+  if (!(await fsExists(candidate))) return candidate;
+  for (let i = 2; i < 1000; i++) {
+    candidate = await joinPath(parent, `${baseName}-${i}`);
+    if (!(await fsExists(candidate))) return candidate;
+  }
+  // Extremely unlikely fallthrough: append a short unique id.
+  return await joinPath(parent, `${baseName}-${uid().slice(0, 6)}`);
+}
+
+/** De-dupe a display name against existing project names ("My Site" -> "My Site copy", "My Site copy 2", …). */
+function uniqueName(name: string, projects: Project[]): string {
+  const taken = new Set(projects.map((p) => p.name));
+  if (!taken.has(`${name} copy`)) return `${name} copy`;
+  for (let i = 2; i < 1000; i++) {
+    const candidate = `${name} copy ${i}`;
+    if (!taken.has(candidate)) return candidate;
+  }
+  return `${name} copy ${uid().slice(0, 6)}`;
 }
 
 /** Permanently delete an archived project: remove its files + registry entry. */

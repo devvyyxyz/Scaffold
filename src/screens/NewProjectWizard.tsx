@@ -2,7 +2,7 @@ import { useState } from "react";
 import { open } from "@tauri-apps/plugin-dialog";
 import { useAppStore } from "../lib/store";
 import { createProject, scaffoldProjectFiles, getScaffoldSteps } from "../lib/projects";
-import { defaultProjectDir, basename } from "../lib/paths";
+import { defaultProjectDir } from "../lib/paths";
 import { isTauri } from "../lib/ipc";
 import { ProjectStack, ProjectTemplate, Project } from "../lib/types";
 import { Button } from "../components/ui/Button";

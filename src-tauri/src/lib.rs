@@ -60,6 +60,14 @@ fn scaffold_move_dir(from: String, to: String) -> Result<(), String> {
     }
 }
 
+/// Recursively copy a directory tree into a new location, leaving the source
+/// intact. Used by the duplicate-project workflow. Creates `dest` and all
+/// intermediate dirs.
+#[command]
+fn scaffold_copy_dir(from: String, to: String) -> Result<(), String> {
+    copy_dir_recursive(&PathBuf::from(&from), &PathBuf::from(&to))
+}
+
 /// Recursively copy a directory tree. Used as a cross-volume fallback by
 /// `scaffold_move_dir`. Creates `dest` and all intermediate dirs.
 fn copy_dir_recursive(src: &PathBuf, dest: &PathBuf) -> Result<(), String> {
@@ -194,6 +202,7 @@ pub fn run() {
             scaffold_remove,
             scaffold_rename,
             scaffold_move_dir,
+            scaffold_copy_dir,
             scaffold_write_text_file,
             scaffold_read_text_file,
             scaffold_exists,

@@ -65,11 +65,12 @@ interface AppState {
   upsertProject: (project: Project) => void;
   setSidebarWidth: (px: number) => Promise<void>;
   toggleSidebar: () => Promise<void>;
+  setDashboardView: (view: "grid" | "list") => Promise<void>;
 }
 
 async function readStore() {
   if (!isTauri()) return null;
-  return await load(STORE_FILE, { autoSave: false });
+  return await load(STORE_FILE, { autoSave: false, defaults: {} });
 }
 
 async function loadSettings(): Promise<AppSettings> {
@@ -202,6 +203,12 @@ export const useAppStore = create<AppState>((set, get) => ({
 
   async toggleSidebar() {
     const settings = { ...get().settings, sidebarCollapsed: !get().settings.sidebarCollapsed };
+    set({ settings });
+    await saveSettings(settings);
+  },
+
+  async setDashboardView(view) {
+    const settings = { ...get().settings, dashboardView: view };
     set({ settings });
     await saveSettings(settings);
   },

@@ -3,7 +3,7 @@ import { open } from "@tauri-apps/plugin-dialog";
 import { useAppStore } from "../lib/store";
 import { defaultProjectDir } from "../lib/paths";
 import { isTauri, isOnboardingWindow, closeOnboardingWindow } from "../lib/ipc";
-import { ThemePref, ProjectStack, ProjectTemplate, AutoSaveInterval, CanvasZoom, AppSettings } from "../lib/types";
+import { ThemePref, ProjectStack, ProjectTemplate, AutoSaveInterval, AppSettings } from "../lib/types";
 import { Button } from "../components/ui/Button";
 import { Icon, IconName } from "../components/ui/Icon";
 import { Logo } from "../components/ui/Logo";

@@ -1,11 +1,12 @@
 import { useEffect, useState } from "react";
 import { useAppStore } from "./lib/store";
-import { isOnboardingWindow, isDocsWindow } from "./lib/ipc";
+import { isOnboardingWindow, isDocsWindow, isProjectsWindow } from "./lib/ipc";
 import { isEditableTarget, matchesShortcut } from "./lib/keyboard";
 import { AppShell } from "./components/shell/AppShell";
 import { BootScreen } from "./components/shell/BootScreen";
 import { ErrorBoundary } from "./components/ErrorBoundary";
 import { Onboarding } from "./screens/Onboarding";
+import { ProjectsWindow } from "./screens/ProjectsWindow";
 import { Dashboard } from "./screens/Dashboard";
 import { NewProjectWizard } from "./screens/NewProjectWizard";
 import { Editor } from "./screens/Editor";
@@ -109,6 +110,11 @@ export default function App() {
   // boot screen, app shell, or command palette.
   if (isDocsWindow()) {
     return <Docs />;
+  }
+
+  // This is the projects window — show the projects interface in its own window.
+  if (isProjectsWindow()) {
+    return <ProjectsWindow />;
   }
 
   // Show boot screen until the user clicks "Next" (which requires both the

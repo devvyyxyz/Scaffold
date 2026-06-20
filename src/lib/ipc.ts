@@ -26,6 +26,11 @@ export function isDocsWindow(): boolean {
   return new URLSearchParams(window.location.search).get("window") === "docs";
 }
 
+/** Whether this window is the projects window (detected via URL param). */
+export function isProjectsWindow(): boolean {
+  return new URLSearchParams(window.location.search).get("window") === "projects";
+}
+
 /** Show the onboarding window and hide the main window. */
 export async function showOnboardingWindow(): Promise<void> {
   if (!isTauri()) return;
@@ -36,6 +41,18 @@ export async function showOnboardingWindow(): Promise<void> {
 export async function closeOnboardingWindow(): Promise<void> {
   if (!isTauri()) return;
   await invoke("close_onboarding_window");
+}
+
+/** Show the projects window and hide the main window. */
+export async function showProjectsWindow(): Promise<void> {
+  if (!isTauri()) return;
+  await invoke("show_projects_window");
+}
+
+/** Close the projects window and show the main window. */
+export async function closeProjectsWindow(): Promise<void> {
+  if (!isTauri()) return;
+  await invoke("close_projects_window");
 }
 
 /** Open the documentation window (a separate native window). Creates it if it

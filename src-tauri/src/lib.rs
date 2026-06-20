@@ -174,6 +174,32 @@ fn close_onboarding_window(app: AppHandle) -> Result<(), String> {
     Ok(())
 }
 
+/// Show the projects window and hide the main window.
+#[command]
+fn show_projects_window(app: AppHandle) -> Result<(), String> {
+    if let Some(win) = app.get_webview_window("projects") {
+        win.show().map_err(|e| e.to_string())?;
+        win.set_focus().map_err(|e| e.to_string())?;
+    }
+    if let Some(main) = app.get_webview_window("main") {
+        main.hide().map_err(|e| e.to_string())?;
+    }
+    Ok(())
+}
+
+/// Close the projects window and show the main window.
+#[command]
+fn close_projects_window(app: AppHandle) -> Result<(), String> {
+    if let Some(win) = app.get_webview_window("projects") {
+        win.close().map_err(|e| e.to_string())?;
+    }
+    if let Some(main) = app.get_webview_window("main") {
+        main.show().map_err(|e| e.to_string())?;
+        main.set_focus().map_err(|e| e.to_string())?;
+    }
+    Ok(())
+}
+
 // ---------------------------------------------------------------------------
 // App entry
 // ---------------------------------------------------------------------------
@@ -209,6 +235,8 @@ pub fn run() {
             scaffold_read_dir,
             show_onboarding_window,
             close_onboarding_window,
+            show_projects_window,
+            close_projects_window,
         ])
         .run(tauri::generate_context!())
         .expect("error while running Scaffold application");

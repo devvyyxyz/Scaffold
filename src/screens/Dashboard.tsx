@@ -9,7 +9,7 @@ import {
   formatRelative,
 } from "../lib/projects";
 import { basename } from "../lib/paths";
-import { isTauri } from "../lib/ipc";
+import { isTauri, isProjectsWindow, showProjectsWindow } from "../lib/ipc";
 import { EmptyState } from "../components/EmptyState";
 import { Button } from "../components/ui/Button";
 import { Icon } from "../components/ui/Icon";
@@ -53,7 +53,11 @@ export function Dashboard() {
   };
 
   useEffect(() => {
-    reload();
+    if (isProjectsWindow()) {
+      reload();
+    } else {
+      void showProjectsWindow();
+    }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 

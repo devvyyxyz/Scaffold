@@ -1,9 +1,8 @@
-import { useState } from "react";
 import { open, Command } from "@tauri-apps/plugin-shell";
 import { open as openDialog } from "@tauri-apps/plugin-dialog";
 import { useAppStore } from "../lib/store";
 import { isTauri } from "../lib/ipc";
-import { AppSettings, ThemePref, AutoSaveInterval, CanvasZoom } from "../lib/types";
+import { AppSettings, ThemePref, AutoSaveInterval, CanvasZoom, SettingsSection } from "../lib/types";
 import { Button } from "../components/ui/Button";
 import { Select } from "../components/ui/Field";
 import { Segmented } from "../components/ui/Field";
@@ -13,7 +12,7 @@ import { Toggle } from "../components/ui/Toggle";
 import { SettingSection, SettingRow } from "../components/ui/Setting";
 import "./screens.css";
 
-type Section = "general" | "appearance" | "editor" | "export" | "runtime" | "updates" | "itchio" | "developer" | "about";
+type Section = SettingsSection;
 
 const SECTIONS: { id: Section; label: string; icon: IconName }[] = [
   { id: "general", label: "General", icon: "settings" },
@@ -45,11 +44,18 @@ const SECTION_DESC: Partial<Record<Section, string>> = {
 };
 
 export function Settings() {
-  const [section, setSection] = useState<Section>("general");
+  const route = useAppStore((s) => s.route);
+  const navigate = useAppStore((s) => s.navigate);
   const settings = useAppStore((s) => s.settings);
   const setTheme = useAppStore((s) => s.setTheme);
   const setDefaultProjectDir = useAppStore((s) => s.setDefaultProjectDir);
   const resetOnboarding = useAppStore((s) => s.resetOnboarding);
+
+  // Active section is driven by the route so the command palette can deep-link
+  // to a specific tab. Falls back to "general" when navigated to directly.
+  const section: Section =
+    route.name === "settings" && route.section ? route.section : "general";
+  const setSection = (id: Section) => navigate({ name: "settings", section: id });
 
   const set = <K extends keyof AppSettings>(key: K, value: AppSettings[K]) =>
     useAppStore.setState((s) => ({ settings: { ...s.settings, [key]: value } }));
@@ -128,37 +134,40 @@ export function Settings() {
                       <option value="plain">Plain HTML</option>
                     </Select>
                   </SettingRow>
-                  <SettingRow title="Language" desc="Interface language.">
-                    <Select value={settings.language} onChange={(e) => set("language", e.target.value)}>
+                  <SettingRow title="Language" desc="Interface language." comingSoon>
+                    <Select value={settings.language} onChange={(e) => set("language", e.target.value)} disabled>
                       <option value="en">English</option>
                     </Select>
                   </SettingRow>
                 </SettingSection>
 
                 <SettingSection title="Pages" icon="code">
-                  <SettingRow title="Page title prefix" desc="Prepended to page titles, e.g. 'Scaffold — About'.">
+                  <SettingRow title="Page title prefix" desc="Prepended to page titles, e.g. 'Scaffold — About'." comingSoon>
                     <input
                       className="control"
                       value={settings.pageTitlePrefix}
                       onChange={(e) => set("pageTitlePrefix", e.target.value)}
                       placeholder="Scaffold — "
+                      disabled
                     />
                   </SettingRow>
-                  <SettingRow title="Default meta description" desc="Template for new page meta descriptions. Use {{page}} for the page title.">
+                  <SettingRow title="Default meta description" desc="Template for new page meta descriptions. Use {{page}} for the page title." comingSoon>
                     <input
                       className="control"
                       value={settings.metaDescriptionTemplate}
                       onChange={(e) => set("metaDescriptionTemplate", e.target.value)}
                       placeholder="{{page}} — Built with Scaffold"
+                      disabled
                     />
                   </SettingRow>
                 </SettingSection>
 
                 <SettingSection title="Saving" icon="check">
-                  <SettingRow title="Auto-save" desc="Automatically save editor changes at this interval.">
+                  <SettingRow title="Auto-save" desc="Automatically save editor changes at this interval." comingSoon>
                     <Select
                       value={settings.autoSaveInterval}
                       onChange={(e) => set("autoSaveInterval", Number(e.target.value) as AutoSaveInterval)}
+                      disabled
                     >
                       <option value={0}>Off</option>
                       <option value={30}>Every 30s</option>
@@ -167,11 +176,12 @@ export function Settings() {
                       <option value={300}>Every 5m</option>
                     </Select>
                   </SettingRow>
-                  <SettingRow title="Show welcome screen" desc="Show the getting-started screen when the app launches.">
+                  <SettingRow title="Show welcome screen" desc="Show the getting-started screen when the app launches." comingSoon>
                     <Toggle
                       checked={settings.showWelcomeScreen}
                       onChange={(v) => set("showWelcomeScreen", v)}
                       label="Show welcome screen"
+                      disabled
                     />
                   </SettingRow>
                 </SettingSection>
@@ -214,10 +224,11 @@ export function Settings() {
 
             {section === "editor" && (
               <SettingSection title="Canvas" icon="code">
-                <SettingRow title="Canvas zoom" desc="Default zoom level when opening the editor.">
+                <SettingRow title="Canvas zoom" desc="Default zoom level when opening the editor." comingSoon>
                   <Select
                     value={settings.canvasZoom}
                     onChange={(e) => set("canvasZoom", e.target.value as CanvasZoom)}
+                    disabled
                   >
                     <option value="fit">Fit to screen</option>
                     <option value="75">75%</option>
@@ -226,58 +237,67 @@ export function Settings() {
                     <option value="150">150%</option>
                   </Select>
                 </SettingRow>
-                <SettingRow title="Snap to grid" desc="Align dragged blocks to a grid on the canvas.">
-                  <Toggle checked={settings.snapToGrid} onChange={(v) => set("snapToGrid", v)} label="Snap to grid" />
+                <SettingRow title="Snap to grid" desc="Align dragged blocks to a grid on the canvas." comingSoon>
+                  <Toggle checked={settings.snapToGrid} onChange={(v) => set("snapToGrid", v)} label="Snap to grid" disabled />
                 </SettingRow>
-                <SettingRow title="Component outlines" desc="Show thin borders around components on the canvas.">
-                  <Toggle checked={settings.showComponentOutlines} onChange={(v) => set("showComponentOutlines", v)} label="Component outlines" />
+                <SettingRow title="Component outlines" desc="Show thin borders around components on the canvas." comingSoon>
+                  <Toggle checked={settings.showComponentOutlines} onChange={(v) => set("showComponentOutlines", v)} label="Component outlines" disabled />
                 </SettingRow>
-                <SettingRow title="Accent colour" desc="Default accent colour applied to generated sites.">
+                <SettingRow title="Accent colour" desc="Default accent colour applied to generated sites." comingSoon>
                   <div className="rowInputWithButton">
                     <input
                       type="color"
                       value={settings.accentColour}
                       onChange={(e) => set("accentColour", e.target.value)}
                       className="colorSwatch"
+                      disabled
                     />
                     <input
                       className="control mono"
                       value={settings.accentColour}
                       onChange={(e) => set("accentColour", e.target.value)}
                       style={{ flex: 1 }}
+                      disabled
                     />
                   </div>
                 </SettingRow>
-                <SettingRow title="Animations" desc="Enable CSS transitions and animations in the live preview.">
-                  <Toggle checked={settings.enableAnimations} onChange={(v) => set("enableAnimations", v)} label="Animations" />
+                <SettingRow title="Animations" desc="Enable CSS transitions and animations in the live preview." comingSoon>
+                  <Toggle checked={settings.enableAnimations} onChange={(v) => set("enableAnimations", v)} label="Animations" disabled />
                 </SettingRow>
+                <p className="hint" style={{ marginTop: "var(--sp-2)" }}>
+                  The visual canvas editor lands in a later phase — these options will take effect once it ships.
+                </p>
               </SettingSection>
             )}
 
             {section === "export" && (
               <SettingSection title="Export" icon="publish">
-                <SettingRow title="Output format" desc="Clean produces readable code; minified strips whitespace and comments.">
+                <SettingRow title="Output format" desc="Clean produces readable code; minified strips whitespace and comments." comingSoon>
                   <Segmented
                     value={settings.exportFormat}
                     onChange={(v) => set("exportFormat", v as "clean" | "minified")}
+                    disabled
                     options={[
                       { value: "clean", label: "Clean" },
                       { value: "minified", label: "Minified" },
                     ]}
                   />
                 </SettingRow>
-                <SettingRow title="Include source maps" desc="Generate .map files alongside the output for debugging.">
-                  <Toggle checked={settings.includeSourceMaps} onChange={(v) => set("includeSourceMaps", v)} label="Include source maps" />
+                <SettingRow title="Include source maps" desc="Generate .map files alongside the output for debugging." comingSoon>
+                  <Toggle checked={settings.includeSourceMaps} onChange={(v) => set("includeSourceMaps", v)} label="Include source maps" disabled />
                 </SettingRow>
-                <SettingRow title="Output directory" desc="Custom directory for exported builds. Leave empty to use the project default.">
+                <SettingRow title="Output directory" desc="Custom directory for exported builds. Leave empty to use the project default." comingSoon>
                   <div className="rowInputWithButton">
-                    <input className="control mono" value={settings.exportOutputDir ?? ""} readOnly placeholder="Project default" />
-                    <Button size="sm" icon="folder-open" onClick={pickExportDir}>Change</Button>
+                    <input className="control mono" value={settings.exportOutputDir ?? ""} readOnly placeholder="Project default" disabled />
+                    <Button size="sm" icon="folder-open" onClick={pickExportDir} disabled>Change</Button>
                   </div>
                 </SettingRow>
-                <SettingRow title="Auto-open after export" desc="Open the generated site in your default browser when export finishes.">
-                  <Toggle checked={settings.autoOpenAfterExport} onChange={(v) => set("autoOpenAfterExport", v)} label="Auto-open after export" />
+                <SettingRow title="Auto-open after export" desc="Open the generated site in your default browser when export finishes." comingSoon>
+                  <Toggle checked={settings.autoOpenAfterExport} onChange={(v) => set("autoOpenAfterExport", v)} label="Auto-open after export" disabled />
                 </SettingRow>
+                <p className="hint" style={{ marginTop: "var(--sp-2)" }}>
+                  Code export is part of the publishing pipeline, which arrives in a later phase.
+                </p>
               </SettingSection>
             )}
 
@@ -292,7 +312,7 @@ export function Settings() {
                 <SettingRow title="Cache size">
                   <span className="mono" style={{ fontSize: "var(--fs-sm)" }}>—</span>
                 </SettingRow>
-                <SettingRow title="Clear cache" desc="Remove cached build artifacts.">
+                <SettingRow title="Clear cache" desc="Remove cached build artifacts." comingSoon>
                   <Button variant="ghost" size="sm" icon="check" disabled>Clear cache</Button>
                 </SettingRow>
                 <p className="hint" style={{ marginTop: "var(--sp-2)" }}>
@@ -308,8 +328,8 @@ export function Settings() {
                     v{import.meta.env.VITE_APP_VERSION || "0.0.0"}
                   </span>
                 </SettingRow>
-                <SettingRow title="Check for updates" desc="Look for a newer version of Scaffold.">
-                  <Button variant="secondary" size="sm" icon="check" onClick={() => checkForUpdates()}>
+                <SettingRow title="Check for updates" desc="Look for a newer version of Scaffold." comingSoon>
+                  <Button variant="secondary" size="sm" icon="check" onClick={() => checkForUpdates()} disabled>
                     Check for updates
                   </Button>
                 </SettingRow>
@@ -336,16 +356,17 @@ export function Settings() {
 
             {section === "developer" && (
               <SettingSection title="Developer" icon="settings">
-                <SettingRow title="Verbose logging" desc="Enable debug-level logging in the browser console.">
-                  <Toggle checked={settings.verboseLogging} onChange={(v) => set("verboseLogging", v)} label="Verbose logging" />
+                <SettingRow title="Verbose logging" desc="Enable debug-level logging in the browser console." comingSoon>
+                  <Toggle checked={settings.verboseLogging} onChange={(v) => set("verboseLogging", v)} label="Verbose logging" disabled />
                 </SettingRow>
-                <SettingRow title="Open DevTools on start" desc="Automatically open browser DevTools when the app launches.">
-                  <Toggle checked={settings.openDevToolsOnStart} onChange={(v) => set("openDevToolsOnStart", v)} label="Open DevTools on start" />
+                <SettingRow title="Open DevTools on start" desc="Automatically open browser DevTools when the app launches." comingSoon>
+                  <Toggle checked={settings.openDevToolsOnStart} onChange={(v) => set("openDevToolsOnStart", v)} label="Open DevTools on start" disabled />
                 </SettingRow>
-                <SettingRow title="Backend log level" desc="Controls the verbosity of the Rust/Tauri backend logs.">
+                <SettingRow title="Backend log level" desc="Controls the verbosity of the Rust/Tauri backend logs." comingSoon>
                   <Select
                     value={settings.backendLogLevel}
                     onChange={(e) => set("backendLogLevel", e.target.value as AppSettings["backendLogLevel"])}
+                    disabled
                   >
                     <option value="off">Off</option>
                     <option value="error">Error</option>
@@ -356,7 +377,7 @@ export function Settings() {
                   </Select>
                 </SettingRow>
                 <p className="hint" style={{ marginTop: "var(--sp-2)" }}>
-                  Developer settings are intended for debugging. Changes take effect on next app launch.
+                  Developer tooling (logging wiring, DevTools control, backend log routing) is not yet hooked up — these options will activate in a later phase.
                 </p>
               </SettingSection>
             )}
@@ -383,6 +404,18 @@ export function Settings() {
 
                 {/* ---- Quick links ---- */}
                 <div className="aboutLinkGrid">
+                  <button
+                    className="aboutLinkCard"
+                    onClick={() => isTauri() && open("https://discord.gg/scaffold")}
+                  >
+                    <span className="aboutLinkIcon"><Icon name="discord" size={18} /></span>
+                    <span className="aboutLinkBody">
+                      <span className="aboutLinkTitle">Community Discord</span>
+                      <span className="aboutLinkDesc">Join the community, get help, and share what you build.</span>
+                    </span>
+                    <Icon name="chevron-right" size={16} className="aboutLinkChevron" />
+                  </button>
+
                   <button
                     className="aboutLinkCard"
                     onClick={() => isTauri() && open("https://github.com/devvyyxyz/scaffold")}

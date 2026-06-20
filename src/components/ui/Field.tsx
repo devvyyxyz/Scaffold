@@ -39,22 +39,26 @@ interface SegmentedProps<T extends string> {
   options: { value: T; label: string; icon?: ReactNode }[];
   value: T;
   onChange: (value: T) => void;
+  /** Disable all segments (e.g. for not-yet-wired settings). */
+  disabled?: boolean;
 }
 
 export function Segmented<T extends string>({
   options,
   value,
   onChange,
+  disabled,
 }: SegmentedProps<T>) {
   return (
-    <div className="segmented" role="tablist">
+    <div className={`segmented ${disabled ? "disabled" : ""}`} role="tablist" aria-disabled={disabled}>
       {options.map((opt) => (
         <button
           key={opt.value}
           role="tab"
           aria-selected={opt.value === value}
           className={`segment ${opt.value === value ? "active" : ""}`}
-          onClick={() => onChange(opt.value)}
+          disabled={disabled}
+          onClick={() => !disabled && onChange(opt.value)}
         >
           {opt.icon}
           {opt.label}

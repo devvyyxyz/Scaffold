@@ -61,6 +61,7 @@ export function Settings() {
     route.name === "settings" && route.section ? route.section : "general";
   const setSection = (id: Section) => navigate({ name: "settings", section: id });
 
+  const [previewModal, setPreviewModal] = useState<string | null>(null);
   const set = <K extends keyof AppSettings>(key: K, value: AppSettings[K]) =>
     useAppStore.setState((s) => ({ settings: { ...s.settings, [key]: value } }));
 
@@ -384,11 +385,72 @@ export function Settings() {
                     <option value="trace">Trace</option>
                   </Select>
                 </SettingRow>
-                <SettingRow title="Error screen preview" desc="Preview the error boundary screen that appears when the app crashes.">
-                  <Button variant="secondary" size="sm" icon="alert-triangle" onClick={() => navigate({ name: "error-demo" })}>
-                    Preview error screen
-                  </Button>
+                
+                <SettingRow title="Modal previews" desc="Preview confirmation dialogs and error screens.">
+                  <div style={{ display: "flex", gap: "var(--sp-2)", flexWrap: "wrap" }}>
+                    <Button variant="secondary" size="sm" icon="trash" onClick={() => setPreviewModal("archive")}>
+                      Archive confirm
+                    </Button>
+                    <Button variant="secondary" size="sm" icon="copy" onClick={() => setPreviewModal("duplicate")}>
+                      Duplicate confirm
+                    </Button>
+                    <Button variant="secondary" size="sm" icon="alert-triangle" onClick={() => setPreviewModal("error")}>
+                      Error screen
+                    </Button>
+                  </div>
                 </SettingRow>
+
+                {previewModal && (
+                  <div style={{ marginTop: "var(--sp-4)" }}>
+                    {previewModal === "archive" && (
+                      <ConfirmDialog
+                        open={true}
+                        title="Archive this project?"
+                        message="This is a preview of the archive confirmation dialog. In production, this would archive the selected project."
+                        confirmLabel="Archive"
+                        tone="default"
+                        onConfirm={() => { setPreviewModal(null); }}
+                        onCancel={() => setPreviewModal(null)}
+                      />
+                    )}
+                    {previewModal === "duplicate" && (
+                      <ConfirmDialog
+                        open={true}
+                        title="Duplicate this project?"
+                        message="This is a preview of the duplicate confirmation dialog. In production, this would create a copy of the selected project."
+                        confirmLabel="Duplicate"
+                        tone="default"
+                        onConfirm={() => { setPreviewModal(null); }}
+                        onCancel={() => setPreviewModal(null)}
+                      />
+                    )}
+                    {previewModal === "error" && (
+                      <div className="errorScreen" style={{ position: "fixed", inset: 0, zIndex: 9999 }}>
+                        <div className="errorContainer">
+                          <div className="errorIcon">
+                            <Icon name="alert-triangle" size={48} />
+                          </div>
+                          <h1 className="errorTitle">Something went wrong</h1>
+                          <p className="errorMessage">ReferenceError: Can't find variable: confirming</p>
+                          <details className="errorDetails">
+                            <summary>Technical details</summary>
+                            <pre className="errorStack">This is a preview of the error boundary screen. In production, this would show the actual error stack trace.</pre>
+                          </details>
+                          <div className="errorActions">
+                            <Button variant="primary" icon="refresh" onClick={() => setPreviewModal(null)}>
+                              Try again
+                            </Button>
+                            <Button variant="ghost" onClick={() => setPreviewModal(null)}>
+                              Go to dashboard
+                            </Button>
+                          </div>
+                          <p className="errorHint">If this problem persists, please report it on GitHub or Discord.</p>
+                        </div>
+                      </div>
+                    )}
+                  </div>
+                )}
+
                 <p className="hint" style={{ marginTop: "var(--sp-3)" }}>
                   Developer tooling (logging wiring, DevTools control, backend log routing) is not yet hooked up — these options will activate in a later phase.
                 </p>

@@ -92,6 +92,8 @@ export interface AppSettings {
   sidebarWidth: number;
   /** Whether the left sidebar is collapsed to an icon-only rail. */
   sidebarCollapsed: boolean;
+  /** Dashboard project presentation: grid of cards or a dense list. */
+  dashboardView: "grid" | "list";
 
   // ── Editor ──
   /** Default zoom level for the canvas. */
@@ -181,6 +183,7 @@ Made with care. Open source. Local first.`,
   // ── Layout defaults ──
   sidebarWidth: 240,
   sidebarCollapsed: false,
+  dashboardView: "grid",
   // ── Editor defaults ──
   canvasZoom: "fit",
   snapToGrid: true,
@@ -200,6 +203,18 @@ Made with care. Open source. Local first.`,
   autoOpenAfterExport: true,
 };
 
+/** Settings tab identifiers (mirrors `Section` in Settings.tsx). */
+export type SettingsSection =
+  | "general"
+  | "appearance"
+  | "editor"
+  | "export"
+  | "runtime"
+  | "updates"
+  | "itchio"
+  | "developer"
+  | "about";
+
 /** A minimal client-side route descriptor for the state-based router. */
 export type Route =
   | { name: "onboarding" }
@@ -207,5 +222,7 @@ export type Route =
   | { name: "new-project" }
   | { name: "editor"; projectId: string }
   | { name: "publish"; projectId: string }
-  | { name: "settings" }
-  | { name: "archive" };
+  | { name: "settings"; section?: SettingsSection }
+  | { name: "archive" }
+  | { name: "deployment-manager" }
+  | { name: "plugins" };

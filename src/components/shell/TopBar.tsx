@@ -1,5 +1,6 @@
 import { useAppStore } from "../../lib/store";
 import { Button } from "../ui/Button";
+import { openDocsWindow } from "../../lib/ipc";
 import "./TopBar.css";
 
 const TITLES: Record<string, string> = {
@@ -33,9 +34,14 @@ export function TopBar() {
 
   if (route.name === "dashboard") {
     actions = (
-      <Button variant="primary" size="sm" icon="plus" onClick={() => navigate({ name: "new-project" })}>
-        New Project
-      </Button>
+      <>
+        <Button variant="ghost" size="sm" icon="book" onClick={() => openDocsWindow()}>
+          Docs
+        </Button>
+        <Button variant="primary" size="sm" icon="plus" onClick={() => navigate({ name: "new-project" })}>
+          New Project
+        </Button>
+      </>
     );
   }
 

@@ -36,6 +36,20 @@
         "center": true,
         "decorations": true,
         "visible": false
+      },
+      {
+        "label": "docs",
+        "title": "Scaffold Documentation",
+        "url": "index.html?window=docs",
+        "width": 1000,
+        "height": 720,
+        "minWidth": 720,
+        "minHeight": 560,
+        "resizable": true,
+        "fullscreen": false,
+        "center": true,
+        "decorations": true,
+        "visible": false
       }
     ],
     "security": {

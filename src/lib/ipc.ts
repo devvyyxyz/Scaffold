@@ -8,6 +8,7 @@
 // access to arbitrary user directories.
 
 import { invoke } from "@tauri-apps/api/core";
+import { WebviewWindow } from "@tauri-apps/api/webviewWindow";
 
 /** Whether we're running inside the Tauri webview (vs. a plain browser). */
 export function isTauri(): boolean {
@@ -17,6 +18,11 @@ export function isTauri(): boolean {
 /** Whether this window is the onboarding window (detected via URL param). */
 export function isOnboardingWindow(): boolean {
   return new URLSearchParams(window.location.search).get("window") === "onboarding";
+}
+
+/** Whether this window is the documentation window (detected via URL param). */
+export function isDocsWindow(): boolean {
+  return new URLSearchParams(window.location.search).get("window") === "docs";
 }
 
 /** Show the onboarding window and hide the main window. */
@@ -29,6 +35,52 @@ export async function showOnboardingWindow(): Promise<void> {
 export async function closeOnboardingWindow(): Promise<void> {
   if (!isTauri()) return;
   await invoke("close_onboarding_window");
+}
+
+/** Open the documentation window (a separate native window). Creates it if it
+ *  doesn't exist, otherwise focuses the existing one. Falls back to a popup
+ *  tab when running in a plain browser (dev mode). */
+export async function openDocsWindow(): Promise<void> {
+  if (!isTauri()) {
+    // Browser fallback: open docs in a new tab or popup so dev tests work.
+    const url = `${window.location.origin}${window.location.pathname}?window=docs`;
+    window.open(url, "scaffold-docs", "width=1000,height=720");
+    return;
+  }
+
+  // If a docs window already exists, just focus it rather than spawning a dupe.
+  const existing = await WebviewWindow.getByLabel("docs");
+  if (existing) {
+    try {
+      await existing.setFocus();
+      await existing.show();
+    } catch {
+      // Focus can race on some platforms; creation below is a safe fallback.
+    }
+    return;
+  }
+
+  try {
+    const win = new WebviewWindow("docs", {
+      url: "/?window=docs",
+      title: "Scaffold Documentation",
+      width: 1000,
+      height: 720,
+      minWidth: 720,
+      minHeight: 560,
+      resizable: true,
+      center: true,
+      decorations: true,
+    });
+
+    // Listen for window-creation errors (Tauri v2 doesn't throw from the
+    // constructor; errors are emitted on the window object).
+    win.once("tauri://error", (e) => {
+      console.error("Docs window creation failed:", e);
+    });
+  } catch (e) {
+    console.error("Docs window creation threw:", e);
+  }
 }
 
 /** Sample command — proves the Rust bridge works. Returns a greeting. */
@@ -90,4 +142,10 @@ export async function fsRename(from: string, to: string): Promise<void> {
 export async function fsMoveDir(from: string, to: string): Promise<void> {
   if (!isTauri()) return;
   await invoke("scaffold_move_dir", { from, to });
+}
+
+/** Recursively copy a directory tree from `from` to `to`, leaving the source intact. */
+export async function fsCopyDir(from: string, to: string): Promise<void> {
+  if (!isTauri()) return;
+  await invoke("scaffold_copy_dir", { from, to });
 }

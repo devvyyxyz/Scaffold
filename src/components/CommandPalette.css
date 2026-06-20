@@ -1,0 +1,205 @@
+/* Command palette — mirrors the ConfirmDialog overlay/dialog conventions
+ * (scrim, surface panel, accent-halo focus) but anchored near the top. */
+
+.cmdOverlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.45);
+  display: flex;
+  align-items: flex-start;
+  justify-content: center;
+  padding-top: 10vh;
+  z-index: 1000;
+  animation: cmdFade var(--dur-fast) var(--ease-out);
+}
+
+@keyframes cmdFade {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+.cmdPanel {
+  background: var(--bg-surface);
+  border: 1px solid var(--border-default);
+  border-radius: var(--radius-lg);
+  box-shadow: var(--shadow-lg);
+  width: calc(100% - var(--sp-8));
+  max-width: 560px;
+  max-height: 70vh;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  animation: cmdPop var(--dur-base) var(--ease-out);
+}
+
+@keyframes cmdPop {
+  from { transform: translateY(-8px) scale(0.98); opacity: 0; }
+  to { transform: translateY(0) scale(1); opacity: 1; }
+}
+
+/* ── Search input ── */
+.cmdInputRow {
+  display: flex;
+  align-items: center;
+  gap: var(--sp-2);
+  padding: var(--sp-3) var(--sp-4);
+  border-bottom: 1px solid var(--border-subtle);
+}
+
+.cmdInputIcon {
+  color: var(--fg-muted);
+  flex-shrink: 0;
+}
+
+.cmdInput {
+  flex: 1;
+  border: none;
+  outline: none;
+  background: transparent;
+  color: var(--fg-primary);
+  font-size: var(--fs-base);
+  font-family: var(--font-sans);
+  padding: var(--sp-1) 0;
+}
+
+.cmdInput::placeholder {
+  color: var(--fg-muted);
+}
+
+.cmdEscHint {
+  flex-shrink: 0;
+  font-family: var(--font-sans);
+  font-size: var(--fs-xs);
+  color: var(--fg-muted);
+  background: var(--bg-sunken);
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-sm);
+  padding: 2px 6px;
+  line-height: 1;
+}
+
+/* ── Results ── */
+.cmdResults {
+  flex: 1;
+  overflow-y: auto;
+  padding: var(--sp-2);
+}
+
+.cmdEmpty {
+  padding: var(--sp-8) var(--sp-4);
+  text-align: center;
+  color: var(--fg-muted);
+  font-size: var(--fs-sm);
+}
+
+.cmdGroup + .cmdGroup {
+  margin-top: var(--sp-2);
+}
+
+.cmdGroupLabel {
+  font-size: var(--fs-xs);
+  font-weight: var(--fw-semibold);
+  color: var(--fg-muted);
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  padding: var(--sp-2) var(--sp-3) var(--sp-1);
+}
+
+.cmdRow {
+  display: flex;
+  align-items: center;
+  gap: var(--sp-3);
+  width: 100%;
+  padding: var(--sp-2) var(--sp-3);
+  border: none;
+  background: transparent;
+  color: var(--fg-primary);
+  border-radius: var(--radius-md);
+  cursor: pointer;
+  text-align: left;
+  transition: background var(--dur-fast) var(--ease-out);
+}
+
+.cmdRow:hover {
+  background: var(--bg-hover);
+}
+
+.cmdRow.active {
+  background: var(--accent-subtle);
+  color: var(--accent);
+}
+
+.cmdRow.active .cmdRowSubtitle,
+.cmdRow.active .cmdRowIcon {
+  color: var(--accent);
+  opacity: 0.85;
+}
+
+.cmdRowIcon {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--fg-secondary);
+  flex-shrink: 0;
+}
+
+.cmdRowText {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+  flex: 1;
+}
+
+.cmdRowTitle {
+  font-size: var(--fs-sm);
+  font-weight: var(--fw-medium);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.cmdRowSubtitle {
+  font-size: var(--fs-xs);
+  color: var(--fg-muted);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.cmdRowEnter {
+  display: flex;
+  align-items: center;
+  color: var(--accent);
+  flex-shrink: 0;
+  opacity: 0.7;
+}
+
+/* ── Footer ── */
+.cmdFooter {
+  display: flex;
+  align-items: center;
+  gap: var(--sp-4);
+  padding: var(--sp-2) var(--sp-4);
+  border-top: 1px solid var(--border-subtle);
+  font-size: var(--fs-xs);
+  color: var(--fg-muted);
+}
+
+.cmdFooterHint {
+  display: flex;
+  align-items: center;
+  gap: var(--sp-1);
+}
+
+.cmdFooter kbd {
+  font-family: var(--font-sans);
+  font-size: var(--fs-xs);
+  color: var(--fg-secondary);
+  background: var(--bg-sunken);
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-sm);
+  padding: 1px 5px;
+  line-height: 1.4;
+  min-width: 18px;
+  text-align: center;
+}

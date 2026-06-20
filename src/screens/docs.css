@@ -1,0 +1,276 @@
+/* ─── Docs window ──────────────────────────────────────────────
+ * Standalone two-pane documentation viewer rendered in its own
+ * native window. No AppShell chrome — this is the full window.
+ * ──────────────────────────────────────────────────────────── */
+
+.docsWin {
+  display: flex;
+  flex-direction: column;
+  height: 100vh;
+  background: var(--bg-app);
+  overflow: hidden;
+}
+
+/* ── Header ──────────────────────────────────────────────── */
+.docsHeader {
+  display: flex;
+  align-items: center;
+  gap: var(--sp-3);
+  height: 48px;
+  padding: 0 var(--sp-4);
+  background: var(--bg-surface);
+  border-bottom: 1px solid var(--border-subtle);
+  flex-shrink: 0;
+  -webkit-app-region: drag;             /* allow window dragging */
+  user-select: none;
+}
+
+.docsBrand {
+  display: flex;
+  align-items: center;
+  gap: var(--sp-2);
+  -webkit-app-region: no-drag;          /* interactive children */
+}
+
+.docsBrandName {
+  font-size: var(--fs-sm);
+  font-weight: var(--fw-bold);
+  color: var(--fg-primary);
+}
+
+.docsHeaderTitle {
+  flex: 1;
+  font-size: var(--fs-sm);
+  color: var(--fg-secondary);
+  padding-left: var(--sp-2);
+  border-left: 1px solid var(--border-subtle);
+}
+
+.docsVersionPill {
+  display: inline-flex;
+  align-items: center;
+  padding: 2px var(--sp-2);
+  border-radius: var(--radius-full);
+  background: var(--bg-sunken);
+  font-size: var(--fs-xs);
+  font-weight: var(--fw-medium);
+  color: var(--fg-muted);
+  -webkit-app-region: no-drag;
+}
+
+/* ── Body (sidebar + content) ────────────────────────────── */
+.docsBody {
+  display: flex;
+  flex: 1;
+  min-height: 0;
+}
+
+/* ── Sidebar navigation ──────────────────────────────────── */
+.docsNav {
+  width: 220px;
+  flex-shrink: 0;
+  padding: var(--sp-3) var(--sp-2);
+  background: var(--bg-surface);
+  border-right: 1px solid var(--border-subtle);
+  overflow-y: auto;
+}
+
+.docsNavSection {
+  margin-bottom: var(--sp-3);
+}
+
+.docsNavSectionTitle {
+  font-size: var(--fs-xs);
+  font-weight: var(--fw-semibold);
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: var(--fg-muted);
+  padding: var(--sp-1) var(--sp-2);
+  margin-bottom: var(--sp-1);
+}
+
+/* ── Sidebar link ────────────────────────────────────────── */
+.docsNavLink {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--sp-2);
+  width: 100%;
+  padding: 6px var(--sp-2);
+  border: none;
+  border-radius: var(--radius-md);
+  background: transparent;
+  color: var(--fg-secondary);
+  font-size: var(--fs-sm);
+  text-align: left;
+  cursor: pointer;
+  transition: background var(--dur-fast) var(--ease-out),
+              color var(--dur-fast) var(--ease-out);
+}
+
+.docsNavLink:hover {
+  background: var(--bg-hover);
+  color: var(--fg-primary);
+}
+
+.docsNavLink.active {
+  background: var(--accent-subtle);
+  color: var(--accent);
+  font-weight: var(--fw-medium);
+}
+
+.docsNavLinkLabel {
+  flex: 1;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.docsNavLinkTag {
+  display: inline-flex;
+  align-items: center;
+  padding: 1px 6px;
+  border-radius: var(--radius-full);
+  background: var(--bg-sunken);
+  font-size: 10px;
+  font-weight: var(--fw-semibold);
+  color: var(--fg-muted);
+  text-transform: uppercase;
+  letter-spacing: 0.03em;
+  flex-shrink: 0;
+}
+
+.docsNavLink.active .docsNavLinkTag {
+  background: var(--accent);
+  color: var(--accent-fg);
+}
+
+/* ── Content area ────────────────────────────────────────── */
+.docsContent {
+  flex: 1;
+  padding: var(--sp-8) var(--sp-10);
+  overflow-y: auto;
+  background: var(--bg-app);
+}
+
+/* ── Article ─────────────────────────────────────────────── */
+.docArticle {
+  max-width: 720px;
+  margin: 0 auto;
+}
+
+.docTitle {
+  font-size: 1.625rem;
+  font-weight: var(--fw-bold);
+  letter-spacing: -0.02em;
+  color: var(--fg-primary);
+  margin: 0 0 var(--sp-3);
+}
+
+.docTitleLine {
+  display: flex;
+  align-items: center;
+  gap: var(--sp-3);
+  margin-bottom: var(--sp-3);
+}
+
+.docTitleLine .docTitle {
+  margin-bottom: 0;
+}
+
+/* ── Heading ─────────────────────────────────────────────── */
+.docH {
+  font-size: var(--fs-xl);
+  font-weight: var(--fw-semibold);
+  letter-spacing: -0.01em;
+  color: var(--fg-primary);
+  margin: var(--sp-6) 0 var(--sp-3);
+}
+
+.docH:first-child {
+  margin-top: 0;
+}
+
+/* ── Paragraph ───────────────────────────────────────────── */
+.docP {
+  font-size: var(--fs-base);
+  line-height: var(--lh-base);
+  color: var(--fg-secondary);
+  margin: 0 0 var(--sp-4);
+}
+
+.docP.faint {
+  color: var(--fg-muted);
+  font-size: var(--fs-sm);
+}
+
+/* ── Unordered list ──────────────────────────────────────── */
+.docUl {
+  margin: 0 0 var(--sp-4);
+  padding-left: var(--sp-6);
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-2);
+}
+
+.docUl li {
+  font-size: var(--fs-base);
+  line-height: var(--lh-base);
+  color: var(--fg-secondary);
+}
+
+/* ── Callout (info box) ──────────────────────────────────── */
+.docCallout {
+  padding: var(--sp-3) var(--sp-4);
+  margin-bottom: var(--sp-4);
+  border-radius: var(--radius-md);
+  background: var(--accent-subtle);
+  border-left: 3px solid var(--accent);
+  font-size: var(--fs-sm);
+  line-height: var(--lh-base);
+  color: var(--fg-secondary);
+}
+
+/* ── "Coming soon" badge ─────────────────────────────────── */
+/* Scoped to .docArticle so it doesn't override the Settings screen's
+   .comingSoonTag (defined in Setting.css) app-wide. */
+.docArticle .comingSoonTag {
+  display: inline-flex;
+  align-items: center;
+  padding: 3px var(--sp-3);
+  border-radius: var(--radius-full);
+  background: var(--warning);
+  color: #000;
+  font-size: var(--fs-xs);
+  font-weight: var(--fw-bold);
+  text-transform: uppercase;
+  letter-spacing: 0.03em;
+  flex-shrink: 0;
+}
+
+.docStubDesc {
+  font-style: italic;
+}
+
+/* ── Scrollable utility (used on nav and content) ────────── */
+.scroll-y {
+  overflow-y: auto;
+}
+
+.scroll-y::-webkit-scrollbar {
+  width: 6px;
+}
+
+.scroll-y::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.scroll-y::-webkit-scrollbar-thumb {
+  background: var(--border-subtle);
+  border-radius: var(--radius-full);
+}
+
+.scroll-y::-webkit-scrollbar-thumb:hover {
+  background: var(--border-default);
+}

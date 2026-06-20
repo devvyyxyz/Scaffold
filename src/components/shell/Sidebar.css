@@ -97,6 +97,27 @@
   flex-shrink: 0;
 }
 
+/* ---- Coming-soon nav item ---- */
+.navItem.comingSoon {
+  opacity: 0.7;
+}
+.navItem.comingSoon:hover {
+  opacity: 1;
+}
+.navComingSoon {
+  display: inline-flex;
+  align-items: center;
+  padding: 1px var(--sp-2);
+  border-radius: var(--radius-full);
+  background: var(--bg-sunken);
+  color: var(--fg-muted);
+  font-size: 10px;
+  font-weight: var(--fw-bold);
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  flex-shrink: 0;
+}
+
 .footer {
   padding: var(--sp-2);
   display: flex;

@@ -1,5 +1,6 @@
 import { useAppStore } from "../../lib/store";
 import { Route } from "../../lib/types";
+import { openDocsWindow } from "../../lib/ipc";
 import { Icon, IconName } from "../ui/Icon";
 import { Logo } from "../ui/Logo";
 import { Button } from "../ui/Button";
@@ -10,11 +11,17 @@ interface NavEntry {
   label: string;
   icon: IconName;
   match: Route["name"][];
+  /** Small grey pill shown beside the label (e.g. "Coming soon"). */
+  badge?: string;
+  /** Dim the item and mark it as not-yet-available. */
+  comingSoon?: boolean;
 }
 
 const NAV: NavEntry[] = [
   { route: { name: "dashboard" }, label: "Projects", icon: "dashboard", match: ["dashboard", "new-project", "editor", "publish"] },
   { route: { name: "archive" }, label: "Archive", icon: "archive", match: ["archive"] },
+  { route: { name: "deployment-manager" }, label: "Deployment", icon: "rocket", match: ["deployment-manager"], badge: "Coming soon", comingSoon: true },
+  { route: { name: "plugins" }, label: "Plugins", icon: "puzzle", match: ["plugins"], badge: "Coming soon", comingSoon: true },
   { route: { name: "settings" }, label: "Settings", icon: "settings", match: ["settings"] },
 ];
 
@@ -63,16 +70,27 @@ export function Sidebar({ collapsed }: { collapsed: boolean }) {
           return (
             <button
               key={entry.label}
-              className={`navItem ${active ? "active" : ""}`}
+              className={`navItem ${active ? "active" : ""} ${entry.comingSoon ? "comingSoon" : ""}`}
               onClick={() => navigate(entry.route)}
-              title={collapsed ? entry.label : undefined}
+              title={collapsed ? `${entry.label}${entry.badge ? ` · ${entry.badge}` : ""}` : undefined}
             >
               <Icon name={entry.icon} size={17} />
               {!collapsed && <span className="navLabel">{entry.label}</span>}
+              {!collapsed && entry.badge && <span className="navComingSoon">{entry.badge}</span>}
               {!collapsed && count > 0 && <span className="navBadge">{count}</span>}
             </button>
           );
         })}
+
+        {/* Documentation opens a separate native window, not an in-app route. */}
+        <button
+          className="navItem"
+          onClick={() => openDocsWindow()}
+          title={collapsed ? "Documentation" : undefined}
+        >
+          <Icon name="book" size={17} />
+          {!collapsed && <span className="navLabel">Documentation</span>}
+        </button>
 
         {!collapsed && recent.length > 0 && (
           <>

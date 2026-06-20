@@ -43,6 +43,122 @@
   grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
   gap: var(--sp-4);
 }
+
+/* ---- Header action cluster (title row) ---- */
+.screenHeaderActions {
+  display: flex;
+  align-items: center;
+  gap: var(--sp-3);
+}
+
+/* ---- Card / list view toggle ---- */
+.viewToggle {
+  display: inline-flex;
+  align-items: center;
+  gap: 2px;
+  padding: 2px;
+  background: var(--bg-sunken);
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-md);
+}
+.viewToggleBtn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 28px;
+  height: 28px;
+  border: none;
+  border-radius: var(--radius-sm);
+  background: transparent;
+  color: var(--fg-muted);
+  cursor: pointer;
+  padding: 0;
+  transition: background var(--dur-fast) var(--ease-out),
+    color var(--dur-fast) var(--ease-out);
+}
+.viewToggleBtn:hover {
+  color: var(--fg-primary);
+}
+.viewToggleBtn.active {
+  background: var(--bg-surface);
+  color: var(--accent);
+  box-shadow: var(--shadow-sm);
+}
+
+/* ---- Project list (Dashboard) ---- */
+.projectList {
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-2);
+}
+.projectRow {
+  display: flex;
+  align-items: center;
+  gap: var(--sp-3);
+  padding: var(--sp-2) var(--sp-3);
+  background: var(--bg-surface);
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-md);
+  transition: border-color var(--dur-fast) var(--ease-out),
+    box-shadow var(--dur-fast) var(--ease-out);
+}
+.projectRow:hover {
+  border-color: var(--border-default);
+  box-shadow: var(--shadow-sm);
+}
+.projectRowThumb {
+  width: 44px;
+  height: 44px;
+  border-radius: var(--radius-md);
+  background: linear-gradient(135deg, var(--accent-subtle), var(--bg-sunken));
+  overflow: hidden;
+  flex-shrink: 0;
+  cursor: pointer;
+}
+.projectRowThumb img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
+}
+.projectRowMain {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  flex: 1;
+  min-width: 0;
+  cursor: pointer;
+}
+.projectRowName {
+  font-size: var(--fs-sm);
+  font-weight: var(--fw-semibold);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.projectRowPath {
+  font-size: 11px;
+  color: var(--fg-muted);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.projectRowMeta {
+  display: flex;
+  align-items: center;
+  gap: var(--sp-3);
+  flex-shrink: 0;
+}
+.projectRowEdited {
+  font-size: var(--fs-xs);
+  color: var(--fg-muted);
+  white-space: nowrap;
+}
+.projectRowActions {
+  display: flex;
+  gap: var(--sp-1);
+  flex-shrink: 0;
+}
 .projectCard {
   display: flex;
   flex-direction: column;
@@ -989,4 +1105,84 @@
 }
 .aboutDetailRow:last-child {
   border-bottom: none;
+}
+
+/* ---- Deployment Manager ---- */
+.comingSoonHeaderPill {
+  display: inline-flex;
+  align-items: center;
+  padding: 3px var(--sp-3);
+  border-radius: var(--radius-full);
+  background: var(--bg-sunken);
+  color: var(--fg-muted);
+  font-size: var(--fs-xs);
+  font-weight: var(--fw-bold);
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  flex-shrink: 0;
+}
+.deployProviderGrid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+  gap: var(--sp-3);
+}
+.deployProviderCard {
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-2);
+  padding: var(--sp-4);
+  background: var(--bg-surface);
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-md);
+  transition: border-color var(--dur-fast) var(--ease-out);
+}
+.deployProviderCard.comingSoon {
+  opacity: 0.7;
+}
+.deployProviderHead {
+  display: flex;
+  align-items: center;
+  gap: var(--sp-2);
+}
+.deployProviderIcon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 32px;
+  height: 32px;
+  border-radius: var(--radius-md);
+  background: var(--bg-sunken);
+  color: var(--fg-secondary);
+  flex-shrink: 0;
+}
+.deployProviderName {
+  font-size: var(--fs-sm);
+  font-weight: var(--fw-semibold);
+  color: var(--fg-primary);
+  flex: 1;
+}
+.deployProviderDesc {
+  font-size: var(--fs-xs);
+  color: var(--fg-muted);
+  line-height: 1.45;
+  margin: 0;
+  flex: 1;
+}
+.deployProviderActions {
+  margin-top: var(--sp-2);
+}
+
+/* ---- Plugins ---- */
+.pluginCategory {
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-3);
+}
+.pluginCategoryTitle {
+  font-size: var(--fs-sm);
+  font-weight: var(--fw-semibold);
+  color: var(--fg-secondary);
+  margin: 0;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
 }

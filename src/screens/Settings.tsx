@@ -605,6 +605,7 @@ function formatShortcutKeys(keys: string[][]): React.ReactNode {
 
 function KeyboardSection() {
   const [recording, setRecording] = useState<string | null>(null);
+  const [showResetConfirm, setShowResetConfirm] = useState(false);
   const shortcuts = useAppStore((s) => s.settings.keyboardShortcuts);
   const setKeyboardShortcuts = useAppStore((s) => s.setKeyboardShortcuts);
 
@@ -661,12 +662,17 @@ function KeyboardSection() {
   }
 
   function resetAll() {
+    setShowResetConfirm(true);
+  }
+
+  function confirmResetAll() {
     const prev = shortcuts;
     const updated = { ...prev };
     for (const id of Object.keys(updated)) {
       updated[id] = { ...updated[id], keys: updated[id].defaults.map((c) => [...c]) };
     }
     commit(updated);
+    setShowResetConfirm(false);
   }
 
   const hasChanges = Object.values(shortcuts).some(
@@ -760,6 +766,20 @@ function KeyboardSection() {
           >
             Reset all to defaults
           </Button>
+        </div>
+      )}
+
+      {showResetConfirm && (
+        <div style={{ marginTop: "var(--sp-4)" }}>
+          <ConfirmDialog
+            open={true}
+            title="Reset all shortcuts?"
+            message="This will reset all keyboard shortcuts to their default values. Any custom bindings will be lost."
+            confirmLabel="Reset all"
+            tone="default"
+            onConfirm={confirmResetAll}
+            onCancel={() => setShowResetConfirm(false)}
+          />
         </div>
       )}
 

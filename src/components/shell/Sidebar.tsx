@@ -1,9 +1,10 @@
 import { useAppStore } from "../../lib/store";
 import { Route } from "../../lib/types";
-import { openDocsWindow } from "../../lib/ipc";
+import { isTauri, openDocsWindow } from "../../lib/ipc";
 import { Icon, IconName } from "../ui/Icon";
 import { Logo } from "../ui/Logo";
 import { Button } from "../ui/Button";
+import { Command } from "@tauri-apps/plugin-shell";
 import "./Sidebar.css";
 
 interface NavEntry {
@@ -25,6 +26,8 @@ const NAV: NavEntry[] = [
   { route: { name: "settings" }, label: "Settings", icon: "settings", match: ["settings"] },
 ];
 
+const DISCORD_URL = "https://discord.gg/scaffold";
+
 export function Sidebar({ collapsed }: { collapsed: boolean }) {
   const route = useAppStore((s) => s.route);
   const navigate = useAppStore((s) => s.navigate);
@@ -33,6 +36,14 @@ export function Sidebar({ collapsed }: { collapsed: boolean }) {
 
   const recent = projects.filter((p) => !p.archived).slice(0, 4);
   const archiveCount = projects.filter((p) => p.archived).length;
+
+  const openDiscord = async () => {
+    if (isTauri()) {
+      await Command.create("open", [DISCORD_URL]).execute();
+    } else {
+      window.open(DISCORD_URL, "_blank", "noopener,noreferrer");
+    }
+  };
 
   return (
     <nav className={`sidebar ${collapsed ? "collapsed" : ""}`}>
@@ -63,6 +74,8 @@ export function Sidebar({ collapsed }: { collapsed: boolean }) {
         </Button>
       )}
 
+      <div className="navDivider" />
+
       <div className="nav" style={{ marginTop: "var(--sp-3)" }}>
         {NAV.map((entry) => {
           const count = entry.label === "Archive" ? archiveCount : 0;
@@ -81,16 +94,6 @@ export function Sidebar({ collapsed }: { collapsed: boolean }) {
             </button>
           );
         })}
-
-        {/* Documentation opens a separate native window, not an in-app route. */}
-        <button
-          className="navItem"
-          onClick={() => openDocsWindow()}
-          title={collapsed ? "Documentation" : undefined}
-        >
-          <Icon name="book" size={17} />
-          {!collapsed && <span className="navLabel">Documentation</span>}
-        </button>
 
         {!collapsed && recent.length > 0 && (
           <>
@@ -115,15 +118,29 @@ export function Sidebar({ collapsed }: { collapsed: boolean }) {
       </div>
 
       <div className="footer">
-        {!collapsed && (
-          <button
-            className="navItem"
-            onClick={() => navigate({ name: "settings" })}
-          >
-            <Icon name="settings" size={16} />
-            Preferences
-          </button>
-        )}
+        <button
+          className="navItem"
+          onClick={async () => {
+            try {
+              await openDocsWindow();
+            } catch (e) {
+              console.error("Failed to open docs:", e);
+            }
+          }}
+          title="Help"
+        >
+          <Icon name="help-circle" size={16} />
+          {!collapsed && <span className="navLabel">Help</span>}
+        </button>
+
+        <button
+          className="navItem"
+          onClick={openDiscord}
+          title="Feedback"
+        >
+          <Icon name="message-square" size={16} />
+          {!collapsed && <span className="navLabel">Feedback</span>}
+        </button>
 
         <button
           className={`collapseToggle ${collapsed ? "is-collapsed" : ""}`}

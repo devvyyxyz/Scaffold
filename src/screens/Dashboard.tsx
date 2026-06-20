@@ -26,8 +26,6 @@ export function Dashboard() {
   const navigate = useAppStore((s) => s.navigate);
   const setProjects = useAppStore((s) => s.setProjects);
   const settings = useAppStore((s) => s.settings);
-  const setDashboardView = useAppStore((s) => s.setDashboardView);
-
   // Read the stable projects reference, then filter in the render body.
   // Filtering inside the selector would return a new array each render and
   // crash React's useSyncExternalStore ("getSnapshot should be cached").
@@ -54,11 +52,6 @@ export function Dashboard() {
               ? `${active.length} project${active.length === 1 ? "" : "s"}`
               : "Create your first visual React site."}
           </p>
-        </div>
-        <div className="screenHeaderActions">
-          <Button variant="primary" icon="plus" onClick={() => navigate({ name: "new-project" })}>
-            New Project
-          </Button>
         </div>
       </div>
 

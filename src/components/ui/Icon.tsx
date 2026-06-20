@@ -45,7 +45,9 @@ export type IconName =
   | "keyboard"
   | "alert-triangle"
   | "bell"
-  | "user";
+  | "user"
+  | "help-circle"
+  | "message-square";
 
 interface IconProps {
   name: IconName;
@@ -271,6 +273,18 @@ const PATHS: Record<IconName, ReactNode> = {
     <>
       <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2" />
       <circle cx="12" cy="7" r="4" />
+    </>
+  ),
+  "help-circle": (
+    <>
+      <circle cx="12" cy="12" r="10" />
+      <path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3" />
+      <line x1="12" y1="17" x2="12.01" y2="17" />
+    </>
+  ),
+  "message-square": (
+    <>
+      <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z" />
     </>
   ),
 };

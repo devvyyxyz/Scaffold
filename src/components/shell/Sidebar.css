@@ -53,6 +53,7 @@
   cursor: pointer;
   transition: background var(--dur-fast) var(--ease-out),
     color var(--dur-fast) var(--ease-out);
+  text-align: left;
 }
 .navItem:hover {
   background: var(--bg-hover);
@@ -62,6 +63,12 @@
   background: var(--accent-subtle);
   color: var(--accent);
   font-weight: var(--fw-medium);
+}
+
+.navDivider {
+  height: 1px;
+  background: var(--border);
+  margin: var(--sp-3) 0;
 }
 
 .navSection {

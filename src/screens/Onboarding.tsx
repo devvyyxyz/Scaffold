@@ -69,6 +69,28 @@ export function Onboarding() {
     applyTheme(theme);
   }, [theme]);
 
+  // Disable window close button during onboarding to prevent premature exit
+  useEffect(() => {
+    if (!isTauri() || !isOnboardingWindow()) return;
+    
+    // Try to disable the close button via Tauri API
+    const disableClose = async () => {
+      try {
+        const { WebviewWindow } = await import("@tauri-apps/api/webviewWindow");
+        const window = WebviewWindow.getCurrent();
+        if (window) {
+          // Set decorations to false programmatically as a fallback
+          await window.setDecorations(false);
+          console.log("Onboarding window decorations disabled");
+        }
+      } catch (error) {
+        console.error("Could not disable window decorations:", error);
+      }
+    };
+    
+    disableClose();
+  }, []);
+
   async function pickFolder() {
     if (!isTauri()) {
       setDir("/tmp/Scaffold-projects");

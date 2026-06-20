@@ -80,6 +80,7 @@ export function Onboarding() {
 
   function buildSettings(): Partial<AppSettings> {
     return {
+      theme,
       defaultStack,
       defaultTemplate,
       language,

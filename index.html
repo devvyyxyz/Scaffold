@@ -7,9 +7,100 @@
     <link rel="icon" type="image/png" href="/favicon-32x32.png" sizes="32x32" />
     <link rel="apple-touch-icon" href="/apple-touch-icon.png" />
     <title>Scaffold</title>
+    <!--
+      Inline splash screen.
+      Renders synchronously before the JS bundle downloads/evaluates so the app
+      never shows a white screen while booting. It mirrors the BootScreen design
+      and is removed by main.tsx once React has mounted the real BootScreen.
+      Styles are scoped under #initial-splash to avoid leaking into the app.
+    -->
+    <style>
+      #initial-splash {
+        position: fixed;
+        inset: 0;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        gap: 24px;
+        background: #ffffff;
+        z-index: 9999;
+        animation: splash-fade-in 0.2s ease-out both;
+      }
+      :root[data-theme="dark"] #initial-splash {
+        background: #000000;
+      }
+      #initial-splash .splash-brand {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        gap: 16px;
+      }
+      #initial-splash .splash-logo {
+        width: 64px;
+        height: 64px;
+        filter: drop-shadow(0 2px 8px rgba(99, 102, 241, 0.3));
+      }
+      #initial-splash .splash-name {
+        font-family: system-ui, -apple-system, "Segoe UI", sans-serif;
+        font-size: 1.25rem;
+        font-weight: 700;
+        letter-spacing: -0.02em;
+        color: #0f172a;
+      }
+      :root[data-theme="dark"] #initial-splash .splash-name {
+        color: #f1f5f9;
+      }
+      #initial-splash .splash-bar {
+        width: 200px;
+        height: 4px;
+        border-radius: 999px;
+        background: rgba(0, 0, 0, 0.08);
+        overflow: hidden;
+      }
+      :root[data-theme="dark"] #initial-splash .splash-bar {
+        background: #141414;
+      }
+      #initial-splash .splash-bar-fill {
+        height: 100%;
+        width: 0;
+        border-radius: 999px;
+        background: linear-gradient(90deg, #6366f1, #9aa5f5);
+        animation: splash-load 1.4s ease-out forwards;
+      }
+      @keyframes splash-fade-in {
+        from { opacity: 0; }
+        to { opacity: 1; }
+      }
+      @keyframes splash-load {
+        from { width: 0; }
+        to { width: 70%; }
+      }
+    </style>
+    <!--
+      Apply the theme synchronously so the splash (and first app paint) uses the
+      right background. We only know the OS preference here; the persisted pref
+      is reconciled by the store once React mounts.
+    -->
+    <script>
+      (function () {
+        try {
+          var dark = window.matchMedia("(prefers-color-scheme: dark)").matches;
+          document.documentElement.setAttribute("data-theme", dark ? "dark" : "light");
+        } catch (e) {}
+      })();
+    </script>
   </head>
   <body>
-    <div id="root"></div>
+    <div id="root">
+      <div id="initial-splash">
+        <div class="splash-brand">
+          <img class="splash-logo" src="/apple-touch-icon.png" width="64" height="64" alt="Scaffold" draggable="false" />
+          <span class="splash-name">Scaffold</span>
+        </div>
+        <div class="splash-bar"><div class="splash-bar-fill"></div></div>
+      </div>
+    </div>
     <script type="module" src="/src/main.tsx"></script>
   </body>
 </html>

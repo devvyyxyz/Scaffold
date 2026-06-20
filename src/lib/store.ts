@@ -284,8 +284,8 @@ export const useAppStore = create<AppState>((set, get) => ({
     set({ currentProjectId: id });
   },
 
-  async clearCache() {
-    clearProjectCache();
+  async clearCache(options?: { projects?: boolean; manifests?: boolean }) {
+    clearProjectCache(options);
     // Also reload projects from disk to refresh the store.
     const projects = await readRegistry();
     set({ projects });

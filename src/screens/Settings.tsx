@@ -64,6 +64,8 @@ export function Settings() {
   const setSection = (id: Section) => navigate({ name: "settings", section: id });
 
   const [previewModal, setPreviewModal] = useState<string | null>(null);
+  const [showClearCacheModal, setShowClearCacheModal] = useState(false);
+  const [clearCacheOptions, setClearCacheOptions] = useState({ projects: true, manifests: true });
   const [cacheStats, setCacheStats] = useState({ projectsCached: false, manifestsCached: 0 });
   const set = <K extends keyof AppSettings>(key: K, value: AppSettings[K]) =>
     useAppStore.setState((s) => ({ settings: { ...s.settings, [key]: value } }));
@@ -90,13 +92,14 @@ export function Settings() {
   }
 
   async function handleClearCache() {
-    const confirmed = window.confirm(
-      "Clear in-memory cache?\n\nThis will force the app to reload all project data from disk. The app may briefly pause while data is refreshed."
-    );
-    if (confirmed) {
-      await clearCache();
-      setCacheStats(getCacheStats());
-    }
+    setShowClearCacheModal(true);
+  }
+
+  async function confirmClearCache() {
+    await clearCache(clearCacheOptions);
+    setCacheStats(getCacheStats());
+    setShowClearCacheModal(false);
+    setClearCacheOptions({ projects: true, manifests: true });
   }
 
   // Update cache stats periodically and after clear.
@@ -478,6 +481,45 @@ export function Settings() {
                     Clear cache
                   </Button>
                 </SettingRow>
+
+                {showClearCacheModal && (
+                  <div style={{ marginTop: "var(--sp-4)" }}>
+                    <div className="card" style={{ maxWidth: 400 }}>
+                      <h3 style={{ fontSize: "var(--fs-base)", fontWeight: "var(--fw-semibold)", marginBottom: "var(--sp-3)" }}>
+                        Clear cache
+                      </h3>
+                      <p style={{ fontSize: "var(--fs-sm)", color: "var(--fg-secondary)", marginBottom: "var(--sp-4)" }}>
+                        Select what to clear:
+                      </p>
+                      <div style={{ display: "flex", flexDirection: "column", gap: "var(--sp-2)", marginBottom: "var(--sp-4)" }}>
+                        <label style={{ display: "flex", alignItems: "center", gap: "var(--sp-2)", cursor: "pointer" }}>
+                          <input
+                            type="checkbox"
+                            checked={clearCacheOptions.projects}
+                            onChange={(e) => setClearCacheOptions({ ...clearCacheOptions, projects: e.target.checked })}
+                          />
+                          <span style={{ fontSize: "var(--fs-sm)" }}>Projects list ({cacheStats.projectsCached ? "cached" : "empty"})</span>
+                        </label>
+                        <label style={{ display: "flex", alignItems: "center", gap: "var(--sp-2)", cursor: "pointer" }}>
+                          <input
+                            type="checkbox"
+                            checked={clearCacheOptions.manifests}
+                            onChange={(e) => setClearCacheOptions({ ...clearCacheOptions, manifests: e.target.checked })}
+                          />
+                          <span style={{ fontSize: "var(--fs-sm)" }}>Manifests ({cacheStats.manifestsCached} cached)</span>
+                        </label>
+                      </div>
+                      <div style={{ display: "flex", gap: "var(--sp-2)", justifyContent: "flex-end" }}>
+                        <Button variant="ghost" size="sm" onClick={() => setShowClearCacheModal(false)}>
+                          Cancel
+                        </Button>
+                        <Button variant="primary" size="sm" icon="trash" onClick={confirmClearCache}>
+                          Clear selected
+                        </Button>
+                      </div>
+                    </div>
+                  </div>
+                )}
 
                 <p className="hint" style={{ marginTop: "var(--sp-3)" }}>
                   Developer tooling (logging wiring, DevTools control, backend log routing) is not yet hooked up — these options will activate in a later phase.

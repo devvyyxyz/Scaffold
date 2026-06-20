@@ -45,10 +45,15 @@ const CACHE_TTL_MS = 30_000; // 30 seconds
 const manifestCache = new Map<string, { manifest: ProjectManifest | null; ts: number }>();
 const MANIFEST_CACHE_TTL_MS = 10_000; // 10 seconds
 
-export function clearProjectCache(): void {
-  cachedProjects = null;
-  cacheTimestamp = 0;
-  manifestCache.clear();
+export function clearProjectCache(options?: { projects?: boolean; manifests?: boolean }): void {
+  const opts = { projects: true, manifests: true, ...options };
+  if (opts.projects) {
+    cachedProjects = null;
+    cacheTimestamp = 0;
+  }
+  if (opts.manifests) {
+    manifestCache.clear();
+  }
 }
 
 /** Get cache statistics for display in settings. */

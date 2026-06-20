@@ -794,7 +794,7 @@
   gap: var(--sp-8);
   height: 100%;
   padding: var(--sp-6);
-  max-width: 920px;
+  width: 100%;
 }
 
 /* ---- Category nav panel ---- */

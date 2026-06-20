@@ -9,6 +9,7 @@
 
 import { invoke } from "@tauri-apps/api/core";
 import { WebviewWindow } from "@tauri-apps/api/webviewWindow";
+import { getVersion } from "@tauri-apps/api/app";
 
 /** Whether we're running inside the Tauri webview (vs. a plain browser). */
 export function isTauri(): boolean {
@@ -148,4 +149,14 @@ export async function fsMoveDir(from: string, to: string): Promise<void> {
 export async function fsCopyDir(from: string, to: string): Promise<void> {
   if (!isTauri()) return;
   await invoke("scaffold_copy_dir", { from, to });
+}
+
+/** Get the current app version from the Tauri app metadata. */
+export async function getAppVersion(): Promise<string> {
+  if (!isTauri()) return "0.1.0";
+  try {
+    return await getVersion();
+  } catch {
+    return "0.1.0";
+  }
 }

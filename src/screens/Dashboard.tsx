@@ -22,6 +22,20 @@ function revealProject(path: string) {
   if (isTauri()) Command.create("open", [path]).execute();
 }
 
+function getStackIcon(stack: ProjectStack): IconName {
+  switch (stack) {
+    case "vite":
+      return "code";
+    case "next":
+      return "layers";
+    case "remix":
+      return "package";
+    case "plain":
+    default:
+      return "folder";
+  }
+}
+
 export function Dashboard() {
   const navigate = useAppStore((s) => s.navigate);
   const setProjects = useAppStore((s) => s.setProjects);
@@ -31,6 +45,7 @@ export function Dashboard() {
   // crash React's useSyncExternalStore ("getSnapshot should be cached").
   const projects = useAppStore((s) => s.projects);
   const active = projects.filter((p) => !p.archived);
+  const recent = active.slice(0, 4);
   const view = settings.dashboardView;
 
   const reload = () => {
@@ -49,7 +64,7 @@ export function Dashboard() {
           <h1 className="screenTitle">Projects</h1>
           <p className="screenSub">
             {active.length > 0
-              ? `${active.length} project${active.length === 1 ? "" : "s"}`
+              ? "Manage and organize your active workspaces."
               : "Create your first visual React site."}
           </p>
         </div>
@@ -66,28 +81,56 @@ export function Dashboard() {
             </Button>
           }
         />
-      ) : view === "list" ? (
-        <div className="projectList">
-          {active.map((p) => (
-            <ProjectRow
-              key={p.id}
-              project={p}
-              onOpen={() => navigate({ name: "editor", projectId: p.id })}
-              onChanged={reload}
-            />
-          ))}
-        </div>
       ) : (
-        <div className="projectGrid">
-          {active.map((p) => (
-            <ProjectCard
-              key={p.id}
-              project={p}
-              onOpen={() => navigate({ name: "editor", projectId: p.id })}
-              onChanged={reload}
-            />
-          ))}
-        </div>
+        <>
+          {recent.length > 0 && (
+            <section className="recentlyOpened">
+              <h2 className="recentlyOpenedTitle">Recently Opened</h2>
+              <div className="recentlyOpenedRow">
+                {recent.map((p) => (
+                  <button
+                    key={p.id}
+                    className="recentCard"
+                    onClick={() => navigate({ name: "editor", projectId: p.id })}
+                    title={p.name}
+                  >
+                    <span className="recentCardIcon">
+                      <Icon name={getStackIcon(p.stack)} size={20} />
+                    </span>
+                    <span className="recentCardBody">
+                      <span className="recentCardName">{p.name}</span>
+                      <span className="recentCardTime">{formatRelative(p.lastEditedAt ?? p.updatedAt)}</span>
+                    </span>
+                  </button>
+                ))}
+              </div>
+            </section>
+          )}
+
+          {view === "list" ? (
+            <div className="projectList">
+              {active.map((p) => (
+                <ProjectRow
+                  key={p.id}
+                  project={p}
+                  onOpen={() => navigate({ name: "editor", projectId: p.id })}
+                  onChanged={reload}
+                />
+              ))}
+            </div>
+          ) : (
+            <div className="projectGrid">
+              {active.map((p) => (
+                <ProjectCard
+                  key={p.id}
+                  project={p}
+                  onOpen={() => navigate({ name: "editor", projectId: p.id })}
+                  onChanged={reload}
+                />
+              ))}
+            </div>
+          )}
+        </>
       )}
 
       {settings.defaultProjectDir && (

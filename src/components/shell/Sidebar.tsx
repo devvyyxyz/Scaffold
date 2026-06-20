@@ -95,26 +95,6 @@ export function Sidebar({ collapsed }: { collapsed: boolean }) {
           );
         })}
 
-        {!collapsed && recent.length > 0 && (
-          <>
-            <div className="navSection">Recent</div>
-            {recent.map((p) => (
-              <button
-                key={p.id}
-                className={`navItem ${
-                  route.name === "editor" && "projectId" in route && route.projectId === p.id
-                    ? "active"
-                    : ""
-                }`}
-                onClick={() => navigate({ name: "editor", projectId: p.id })}
-                title={p.path}
-              >
-                <Icon name="folder" size={16} />
-                <span className="navRecentLabel">{p.name}</span>
-              </button>
-            ))}
-          </>
-        )}
       </div>
 
       <div className="footer">

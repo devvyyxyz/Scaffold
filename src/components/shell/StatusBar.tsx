@@ -1,12 +1,18 @@
+import { useEffect, useState } from "react";
 import { useAppStore } from "../../lib/store";
-import { isTauri } from "../../lib/ipc";
+import { isTauri, getAppVersion } from "../../lib/ipc";
 import "./StatusBar.css";
 
 export function StatusBar() {
   const route = useAppStore((s) => s.route);
   const settings = useAppStore((s) => s.settings);
+  const [version, setVersion] = useState("0.1.0");
 
   const runtimeLabel = isTauri() ? "Native" : "Browser (dev)";
+
+  useEffect(() => {
+    getAppVersion().then(setVersion);
+  }, []);
 
   return (
     <div className="statusbar">
@@ -19,7 +25,7 @@ export function StatusBar() {
       </div>
       <div className="group">
         <div className="item">{runtimeLabel} runtime</div>
-        <div className="item">v0.1.0</div>
+        <div className="item">v{version}</div>
         <div className="item">theme: {settings.theme}</div>
       </div>
     </div>

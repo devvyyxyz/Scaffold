@@ -19,6 +19,10 @@ src-tauri/gen/schemas/
 # Graphify knowledge graph (local)
 graphify-out/
 
+# TypeScript incremental build cache
+tsconfig.app.tsbuildinfo
+tsconfig.node.tsbuildinfo
+
 # Editor / OS
 .DS_Store
 *.log

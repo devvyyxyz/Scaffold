@@ -49,7 +49,10 @@ export type IconName =
   | "help-circle"
   | "message-square"
   | "home"
-  | "refresh";
+  | "refresh"
+  | "pin"
+  | "star"
+  | "arrow-up-down";
 
 interface IconProps {
   name: IconName;
@@ -299,6 +302,21 @@ const PATHS: Record<IconName, ReactNode> = {
     <>
       <path d="M21 12a9 9 0 1 1-9-9c2.52 0 4.93 1 6.74 2.74L21 8" />
       <path d="M21 3v5h-5" />
+    </>
+  ),
+  pin: (
+    <>
+      <path d="M12 17v5" />
+      <path d="M9 10.76a2 2 0 0 1-1.11 1.79l-1.78.9A2 2 0 0 0 5 15.24V16a1 1 0 0 0 1 1h12a1 1 0 0 0 1-1v-.76a2 2 0 0 0-1.11-1.79l-1.78-.9A2 2 0 0 1 15 10.76V6a1 1 0 0 0-1-1h-4a1 1 0 0 0-1 1v4.76Z" />
+    </>
+  ),
+  star: (
+    <polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2" />
+  ),
+  "arrow-up-down": (
+    <>
+      <line x1="12" y1="5" x2="12" y2="19" />
+      <polyline points="19 12 12 19 5 12" />
     </>
   ),
 };

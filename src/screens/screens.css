@@ -233,6 +233,7 @@
   flex-shrink: 0;
 }
 .projectCard {
+  position: relative;
   display: flex;
   flex-direction: column;
   background: var(--bg-surface);
@@ -297,6 +298,140 @@
   font-weight: var(--fw-medium);
   color: var(--fg-secondary);
   text-transform: capitalize;
+}
+
+/* ---- Sort bar (Dashboard header) ---- */
+.sortBar {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--sp-2);
+  padding: 2px var(--sp-3);
+  background: var(--bg-sunken);
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-md);
+}
+.sortBarIcon {
+  color: var(--fg-muted);
+  flex-shrink: 0;
+}
+.sortSelect {
+  appearance: none;
+  background: transparent;
+  border: none;
+  font-size: var(--fs-xs);
+  font-weight: var(--fw-medium);
+  color: var(--fg-secondary);
+  cursor: pointer;
+  padding: 0;
+  outline: none;
+  min-width: 0;
+}
+
+/* ---- Project sections (Favourites / Pinned / All) ---- */
+.projectSection {
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-3);
+}
+.projectSectionTitle {
+  display: flex;
+  align-items: center;
+  gap: var(--sp-2);
+  font-size: var(--fs-xs);
+  font-weight: var(--fw-semibold);
+  color: var(--fg-muted);
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  margin: 0;
+}
+.projectSectionIcon {
+  color: var(--fg-muted);
+}
+
+/* ---- Pin / star badge overlay on project cards ---- */
+.projectCardBadges {
+  position: absolute;
+  top: var(--sp-2);
+  left: var(--sp-2);
+  display: flex;
+  gap: var(--sp-1);
+  z-index: 1;
+  pointer-events: none;
+}
+.badgeIcon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 20px;
+  height: 20px;
+  border-radius: var(--radius-sm);
+  background: rgba(0, 0, 0, 0.5);
+  color: var(--fg-primary);
+  backdrop-filter: blur(4px);
+}
+.badgeIcon.star {
+  color: #facc15;
+}
+
+/* ---- Action buttons (hover overlay on cards, inline on rows) ---- */
+.projectCardActions {
+  position: absolute;
+  bottom: var(--sp-2);
+  right: var(--sp-2);
+  display: flex;
+  gap: var(--sp-1);
+  opacity: 0;
+  transition: opacity var(--dur-fast) var(--ease-out);
+  z-index: 2;
+}
+.projectCard:hover .projectCardActions {
+  opacity: 1;
+}
+.actionBtn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 28px;
+  height: 28px;
+  border: none;
+  border-radius: var(--radius-sm);
+  background: rgba(0, 0, 0, 0.55);
+  color: var(--fg-primary);
+  cursor: pointer;
+  padding: 0;
+  backdrop-filter: blur(4px);
+  transition: background var(--dur-fast) var(--ease-out),
+    color var(--dur-fast) var(--ease-out);
+}
+.actionBtn:hover {
+  background: rgba(0, 0, 0, 0.75);
+}
+.actionBtn.active {
+  color: var(--accent);
+}
+.actionBtn.star {
+  color: #facc15;
+}
+.actionBtn.star.active,
+.actionBtn.active.star {
+  color: #facc15;
+}
+
+/* ---- Inline pin / star badges inside text ---- */
+.inlineBadge {
+  display: inline-flex;
+  align-items: center;
+  vertical-align: -1px;
+  margin-right: 3px;
+  color: var(--fg-muted);
+}
+.inlineBadge.star {
+  color: #facc15;
+}
+
+/* ---- Star colour utility ---- */
+.star {
+  color: #facc15;
 }
 
 /* ---- Wizard ---- */

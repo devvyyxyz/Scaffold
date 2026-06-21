@@ -12,12 +12,22 @@ const TITLES: Record<string, string> = {
   settings: "Settings",
 };
 
+type SortKey = "recent" | "name" | "created";
+
+const SORT_OPTIONS: { value: SortKey; label: string }[] = [
+  { value: "recent", label: "Recently modified" },
+  { value: "name", label: "Name" },
+  { value: "created", label: "Creation date" },
+];
+
 export function TopBar() {
   const route = useAppStore((s) => s.route);
   const navigate = useAppStore((s) => s.navigate);
   const projects = useAppStore((s) => s.projects);
   const view = useAppStore((s) => s.settings.dashboardView);
   const setDashboardView = useAppStore((s) => s.setDashboardView);
+  const sortKey = useAppStore((s) => s.settings.projectSort);
+  const setProjectSort = useAppStore((s) => s.setProjectSort);
 
   let title = TITLES[route.name] ?? "Scaffold";
   let actions: React.ReactNode = null;
@@ -66,26 +76,42 @@ export function TopBar() {
 
       <div className="topbarCenter">
         {route.name === "dashboard" && (
-          <div className="topbarViewToggle" role="group" aria-label="Project view">
-            <button
-              type="button"
-              className={`topbarViewBtn ${view === "grid" ? "active" : ""}`}
-              onClick={() => setDashboardView("grid")}
-              aria-pressed={view === "grid"}
-              title="Grid view"
-            >
-              <Icon name="grid" size={14} />
-            </button>
-            <button
-              type="button"
-              className={`topbarViewBtn ${view === "list" ? "active" : ""}`}
-              onClick={() => setDashboardView("list")}
-              aria-pressed={view === "list"}
-              title="List view"
-            >
-              <Icon name="list" size={14} />
-            </button>
-          </div>
+          <>
+            <div className="topbarSortBar">
+              <Icon name="arrow-up-down" size={14} className="topbarSortIcon" />
+              <select
+                className="topbarSortSelect"
+                value={sortKey}
+                onChange={(e) => void setProjectSort(e.target.value as SortKey)}
+              >
+                {SORT_OPTIONS.map((opt) => (
+                  <option key={opt.value} value={opt.value}>
+                    {opt.label}
+                  </option>
+                ))}
+              </select>
+            </div>
+            <div className="topbarViewToggle" role="group" aria-label="Project view">
+              <button
+                type="button"
+                className={`topbarViewBtn ${view === "grid" ? "active" : ""}`}
+                onClick={() => setDashboardView("grid")}
+                aria-pressed={view === "grid"}
+                title="Grid view"
+              >
+                <Icon name="grid" size={14} />
+              </button>
+              <button
+                type="button"
+                className={`topbarViewBtn ${view === "list" ? "active" : ""}`}
+                onClick={() => setDashboardView("list")}
+                aria-pressed={view === "list"}
+                title="List view"
+              >
+                <Icon name="list" size={14} />
+              </button>
+            </div>
+          </>
         )}
       </div>
 

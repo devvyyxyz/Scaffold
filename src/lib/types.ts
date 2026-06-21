@@ -27,6 +27,10 @@ export interface Project {
   archivedAt?: number;
   /** The project path before archiving, so Restore can return it. */
   archivedFrom?: string;
+  /** Whether the project is pinned (always shown at top). */
+  pinned?: boolean;
+  /** Whether the project is favourited (shown in the Favourites section). */
+  favourite?: boolean;
 }
 
 /** The `.scaffold/manifest.json` shape written into each project folder. */
@@ -49,6 +53,16 @@ export interface ProjectPage {
   title: string;
   /** Ordered tree of nested page ids (for nav nesting). */
   children: string[];
+}
+
+/** Persisted window geometry (size, position, fullscreen/maximized state). */
+export interface WindowState {
+  x?: number;
+  y?: number;
+  width?: number;
+  height?: number;
+  maximized?: boolean;
+  fullscreen?: boolean;
 }
 
 /** Theme preference stored in settings. */
@@ -86,6 +100,8 @@ export interface AppSettings {
   autoSaveInterval: AutoSaveInterval;
   /** Show the welcome / getting-started screen on launch. */
   showWelcomeScreen: boolean;
+  /** Remember window size, position, and fullscreen state across launches. */
+  rememberWindowState: boolean;
 
   // ── Layout ──
   /** Sidebar width in px (clamped 200–400). */
@@ -94,6 +110,8 @@ export interface AppSettings {
   sidebarCollapsed: boolean;
   /** Dashboard project presentation: grid of cards or a dense list. */
   dashboardView: "grid" | "list";
+  /** Default sort order for the project list. */
+  projectSort: "recent" | "name" | "created";
 
   // ── Editor ──
   /** Default zoom level for the canvas. */
@@ -320,10 +338,12 @@ Made with care. Open source. Local first.`,
   metaDescriptionTemplate: "{{page}} — Built with Scaffold",
   autoSaveInterval: 60,
   showWelcomeScreen: true,
+  rememberWindowState: true,
   // ── Layout defaults ──
   sidebarWidth: 240,
   sidebarCollapsed: false,
   dashboardView: "grid",
+  projectSort: "recent",
   // ── Editor defaults ──
   canvasZoom: "fit",
   snapToGrid: true,

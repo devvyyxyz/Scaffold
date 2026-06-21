@@ -100,3 +100,28 @@
   text-transform: uppercase;
   letter-spacing: 0.04em;
 }
+.platformTag {
+  display: inline-flex;
+  align-items: center;
+  padding: 1px var(--sp-2);
+  border-radius: var(--radius-full);
+  background: var(--bg-sunken);
+  color: var(--fg-muted);
+  font-size: 10px;
+  font-weight: var(--fw-bold);
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+.platformTag.free {
+  background: var(--success-subtle);
+  color: var(--success);
+}
+.platformTag.paid {
+  background: var(--warning-subtle);
+  color: var(--warning);
+}
+.storefrontTags {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}

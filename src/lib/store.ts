@@ -16,8 +16,10 @@ import {
   Route,
   ThemePref,
 } from "./types";
-import { isTauri, isOnboardingWindow, showOnboardingWindow, fsReadTextFile, fsWriteTextFile } from "./ipc";
-import { clearProjectCache, purgeExpiredArchives, unloadProject } from "./projects";
+import { isTauri, isOnboardingWindow, showOnboardingWindow, fsReadTextFile, fsWriteTextFile, isDocsWindow, isProjectsWindow, isEditorWindow, openEditorWindow } from "./ipc";
+import { restoreMainWindowState } from "./window-state";
+import { clearProjectCache, purgeExpiredArchives, unloadProject, registerProject, loadProject } from "./projects";
+import type { ProjectLoadResult } from "./projects";
 
 const STORE_FILE = "settings.json";
 // App settings live in their own file, separate from the @tauri-apps/plugin-store
@@ -84,7 +86,7 @@ interface AppState {
 
   // ---- actions ----
   init: () => Promise<void>;
-  navigate: (route: Route) => Promise<void>;
+  navigate: (route: Route) => Promise<ProjectLoadResult | null | void>;
   setTheme: (pref: ThemePref) => Promise<void>;
   setDefaultProjectDir: (dir: string | null) => Promise<void>;
   completeOnboarding: (dir: string, theme: ThemePref, extra?: Partial<AppSettings>) => Promise<void>;
@@ -94,6 +96,9 @@ interface AppState {
   setSidebarWidth: (px: number) => Promise<void>;
   toggleSidebar: () => Promise<void>;
   setDashboardView: (view: "grid" | "list") => Promise<void>;
+  setProjectSort: (sort: "recent" | "name" | "created") => Promise<void>;
+  toggleProjectPin: (id: string) => void;
+  toggleProjectFavourite: (id: string) => void;
   setKeyboardShortcuts: (shortcuts: KeyboardShortcuts) => Promise<void>;
   /** Replace the current project id without side-effects (used by Editor after
    *  the project is actually loaded). Callers should normally use `navigate`. */
@@ -182,7 +187,7 @@ async function loadSettings(): Promise<AppSettings> {
   }
 }
 
-async function saveSettings(settings: AppSettings): Promise<void> {
+export async function saveSettings(settings: AppSettings): Promise<void> {
   try {
     // Write the flat AppSettings blob to the dedicated app-settings file.
     // We do NOT touch the store-plugin file (STORE_FILE): that holds the
@@ -219,6 +224,19 @@ export const useAppStore = create<AppState>((set, get) => ({
     try {
       const settings = await loadSettings();
       applyTheme(settings.theme);
+
+      // Restore the main window's saved geometry (size, position, fullscreen,
+      // maximized) if the setting is enabled. Must run before showing
+      // onboarding so the window is in the right place.
+      if (
+        isTauri() &&
+        !isOnboardingWindow() &&
+        !isDocsWindow() &&
+        !isProjectsWindow() &&
+        !isEditorWindow()
+      ) {
+        await restoreMainWindowState(settings.rememberWindowState);
+      }
 
       // Purge archived projects older than the retention window before the
       // dashboard renders. Best-effort; never blocks startup.
@@ -267,10 +285,17 @@ export const useAppStore = create<AppState>((set, get) => ({
       }
     }
 
-    // Set the new current project id *before* setting the route so the Editor
-    // component sees the new id in its effect.
+    // Opening a project launches a dedicated native window instead of
+    // navigating within the current window. Pre-check the manifest so
+    // callers can show a modal if the project can't be loaded.
     if (route.name === "editor") {
-      set({ currentProjectId: route.projectId });
+      const result = await loadProject(route.projectId);
+      if (!result) return null; // project not in registry
+      if (result.status !== "ok") return result; // missing / corrupt
+
+      const projectName = result.project.name ?? "Project";
+      await openEditorWindow(route.projectId, projectName);
+      return result;
     }
 
     set({ route });
@@ -345,6 +370,35 @@ export const useAppStore = create<AppState>((set, get) => ({
     const settings = { ...get().settings, dashboardView: view };
     set({ settings });
     await saveSettings(settings);
+  },
+
+  async setProjectSort(sort) {
+    const settings = { ...get().settings, projectSort: sort };
+    set({ settings });
+    await saveSettings(settings);
+  },
+
+  toggleProjectPin(id) {
+    const existing = get().projects;
+    set({
+      projects: existing.map((p) =>
+        p.id === id ? { ...p, pinned: !p.pinned } : p
+      ),
+    });
+    // Persist the pin flag to the registry so it survives restarts.
+    const project = get().projects.find((p) => p.id === id);
+    if (project) registerProject(project);
+  },
+
+  toggleProjectFavourite(id) {
+    const existing = get().projects;
+    set({
+      projects: existing.map((p) =>
+        p.id === id ? { ...p, favourite: !p.favourite } : p
+      ),
+    });
+    const project = get().projects.find((p) => p.id === id);
+    if (project) registerProject(project);
   },
 
   async setKeyboardShortcuts(keyboardShortcuts) {

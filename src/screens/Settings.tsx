@@ -1,4 +1,6 @@
 import { revealPath, openExternalUrl } from "../lib/ipc";
+import { saveSettings } from "../lib/store";
+import { clearWindowState } from "../lib/window-state";
 import { open as openDialog } from "@tauri-apps/plugin-dialog";
 import { useEffect, useMemo, useState } from "react";
 import { useAppStore } from "../lib/store";
@@ -36,6 +38,80 @@ const DEV_SECTION: { id: Section; label: string; icon: IconName } = {
   icon: "settings",
 };
 
+const STOREFRONTS: {
+  id: string;
+  title: string;
+  desc: string;
+  url: string;
+  platforms: string[];
+  pricing: "free" | "paid";
+}[] = [
+  {
+    id: "itchio",
+    title: "itch.io",
+    desc: "Download for Linux, macOS, and Windows.",
+    url: "https://devvyyxyz.itch.io/scaffold",
+    platforms: ["Linux", "macOS", "Windows"],
+    pricing: "free",
+  },
+  {
+    id: "flathub",
+    title: "Flathub",
+    desc: "Flatpak package for Linux distributions.",
+    url: "https://flathub.org",
+    platforms: ["Linux"],
+    pricing: "free",
+  },
+  {
+    id: "snapcraft",
+    title: "Snapcraft",
+    desc: "Snap package for Linux distributions.",
+    url: "https://snapcraft.io",
+    platforms: ["Linux"],
+    pricing: "free",
+  },
+  {
+    id: "homebrew",
+    title: "Homebrew",
+    desc: "Install via Homebrew on macOS.",
+    url: "https://brew.sh",
+    platforms: ["macOS"],
+    pricing: "free",
+  },
+  {
+    id: "macupdate",
+    title: "MacUpdate",
+    desc: "MacUpdate listing for macOS users.",
+    url: "https://macupdate.com",
+    platforms: ["macOS"],
+    pricing: "free",
+  },
+  {
+    id: "alternativeto",
+    title: "AlternativeTo",
+    desc: "Find and suggest alternatives.",
+    url: "https://alternativeto.net",
+    platforms: ["Linux", "macOS", "Windows"],
+    pricing: "free",
+  },
+  {
+    id: "producthunt",
+    title: "Product Hunt",
+    desc: "Discover and share new products.",
+    url: "https://producthunt.com",
+    platforms: ["Linux", "macOS", "Windows"],
+    pricing: "free",
+  },
+  {
+    id: "microsoft",
+    title: "Microsoft Store",
+    desc: "Windows app listing.",
+    url: "https://apps.microsoft.com",
+    platforms: ["Windows"],
+    pricing: "paid",
+  },
+];
+
 const SECTION_DESC: Partial<Record<Section, string>> = {
   general: "Core workspace preferences and application behaviour.",
   appearance: "Theme and visual preferences. Changes apply instantly.",
@@ -44,7 +120,7 @@ const SECTION_DESC: Partial<Record<Section, string>> = {
   export: "How generated code is written out.",
   runtime: "The bundled build runtime.",
   updates: "Application version and update checks.",
-  itchio: "Links to your public product pages.",
+  itchio: "Storefronts and product pages where Scaffold is available.",
   developer: "Debugging tools. Changes take effect on next launch.",
   about: "About Scaffold.",
 };
@@ -69,7 +145,12 @@ export function Settings() {
   const [clearCacheOptions, setClearCacheOptions] = useState({ projects: true, manifests: true });
   const [cacheStats, setCacheStats] = useState({ projectsCached: false, manifestsCached: 0 });
   const set = <K extends keyof AppSettings>(key: K, value: AppSettings[K]) =>
-    useAppStore.setState((s) => ({ settings: { ...s.settings, [key]: value } }));
+    useAppStore.setState((s) => {
+      const settings = { ...s.settings, [key]: value };
+      // Persist to disk so the change survives restarts.
+      void saveSettings(settings);
+      return { settings };
+    });
 
   async function pickDefaultDir() {
     if (!isTauri()) return;
@@ -151,6 +232,16 @@ export function Settings() {
                       <input className="control mono" value={settings.defaultProjectDir ?? "—"} readOnly />
                       <Button size="sm" icon="folder-open" onClick={pickDefaultDir}>Change</Button>
                     </div>
+                  </SettingRow>
+                  <SettingRow title="Remember window size & position" desc="Restore the window to its last size, position, and fullscreen state when reopening the app.">
+                    <Toggle
+                      checked={settings.rememberWindowState}
+                      onChange={(v) => {
+                        set("rememberWindowState", v);
+                        if (!v) void clearWindowState();
+                      }}
+                      label="Remember window state"
+                    />
                   </SettingRow>
                   <SettingRow title="Default stack" desc="Framework used when scaffolding a new project.">
                     <Select
@@ -378,16 +469,26 @@ export function Settings() {
 
             {section === "itchio" && (
               <SettingSection title="Product pages" icon="external">
-                  <SettingRow title="Scaffold on itch.io" desc="Your public product page.">
-                  <Button
-                    variant="secondary"
-                    size="sm"
-                    icon="external"
-                    onClick={() => openExternalUrl("https://devvyyxyz.itch.io/scaffold")}
-                  >
-                    Open
-                  </Button>
-                </SettingRow>
+                {STOREFRONTS.map((sf) => (
+                  <SettingRow key={sf.id} title={sf.title} desc={sf.desc}>
+                    <div className="storefrontTags">
+                      {sf.platforms.map((p) => (
+                        <span key={p} className="platformTag">{p}</span>
+                      ))}
+                      <span className={`platformTag ${sf.pricing}`}>
+                        {sf.pricing === "free" ? "Free" : "Paid"}
+                      </span>
+                    </div>
+                    <Button
+                      variant="secondary"
+                      size="sm"
+                      icon="external"
+                      onClick={() => openExternalUrl(sf.url)}
+                    >
+                      Open
+                    </Button>
+                  </SettingRow>
+                ))}
               </SettingSection>
             )}
 

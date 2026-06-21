@@ -32,6 +32,16 @@ export function isProjectsWindow(): boolean {
   return new URLSearchParams(window.location.search).get("window") === "projects";
 }
 
+/** Whether this window is an editor window (detected via URL param). */
+export function isEditorWindow(): boolean {
+  return new URLSearchParams(window.location.search).get("window") === "editor";
+}
+
+/** Extract the projectId from the URL query params (used by editor windows). */
+export function getProjectIdFromUrl(): string | null {
+  return new URLSearchParams(window.location.search).get("projectId");
+}
+
 /** Show the onboarding window and hide the main window. */
 export async function showOnboardingWindow(): Promise<void> {
   if (!isTauri()) return;
@@ -127,6 +137,53 @@ export async function openDocsWindow(): Promise<void> {
     });
   } catch (e) {
     console.error("Docs window creation threw:", e);
+  }
+}
+
+/** Open a project in a new native window. If a window for this project already
+ *  exists, focuses it. Falls back to a browser popup in dev mode. */
+export async function openEditorWindow(
+  projectId: string,
+  projectName: string,
+): Promise<void> {
+  if (!isTauri()) {
+    const url = `${window.location.origin}${window.location.pathname}?window=editor&projectId=${projectId}`;
+    window.open(url, `scaffold-editor-${projectId}`, "width=1280,height=800");
+    return;
+  }
+
+  const label = `editor-${projectId}`;
+
+  // If an editor window for this project already exists, just focus it.
+  const existing = await WebviewWindow.getByLabel(label);
+  if (existing) {
+    try {
+      await existing.setFocus();
+      await existing.show();
+    } catch {
+      // Focus can race on some platforms; creation below is a safe fallback.
+    }
+    return;
+  }
+
+  try {
+    const win = new WebviewWindow(label, {
+      url: `/?window=editor&projectId=${projectId}`,
+      title: `${projectName} — Scaffold`,
+      width: 1280,
+      height: 800,
+      minWidth: 900,
+      minHeight: 600,
+      resizable: true,
+      center: true,
+      decorations: true,
+    });
+
+    win.once("tauri://error", (e) => {
+      console.error("Editor window creation failed:", e);
+    });
+  } catch (e) {
+    console.error("Editor window creation threw:", e);
   }
 }
 

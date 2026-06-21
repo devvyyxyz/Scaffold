@@ -1,13 +1,15 @@
 import { useEffect, useState } from "react";
 import { listen } from "@tauri-apps/api/event";
 import { useAppStore } from "./lib/store";
-import { isOnboardingWindow, isDocsWindow, isProjectsWindow, isTauri } from "./lib/ipc";
+import { isOnboardingWindow, isDocsWindow, isProjectsWindow, isEditorWindow, isTauri } from "./lib/ipc";
+import { startWindowStateTracking } from "./lib/window-state";
 import { isEditableTarget, matchesShortcut } from "./lib/keyboard";
 import { AppShell } from "./components/shell/AppShell";
 import { BootScreen } from "./components/shell/BootScreen";
 import { ErrorBoundary } from "./components/ErrorBoundary";
 import { Onboarding } from "./screens/Onboarding";
 import { ProjectsWindow } from "./screens/ProjectsWindow";
+import { EditorWindow } from "./screens/EditorWindow";
 import { Dashboard } from "./screens/Dashboard";
 import { NewProjectWizard } from "./screens/NewProjectWizard";
 import { Editor } from "./screens/Editor";
@@ -32,6 +34,14 @@ export default function App() {
   useEffect(() => {
     init();
   }, [init]);
+
+  // Start tracking window geometry changes (resize, move, fullscreen, maximize)
+  // once the store is ready and settings are loaded.
+  useEffect(() => {
+    if (!ready || isOnboardingWindow() || isDocsWindow() || isProjectsWindow() || isEditorWindow()) return;
+    const cleanup = startWindowStateTracking();
+    return cleanup;
+  }, [ready]);
 
   // Listen for onboarding-complete event from Rust backend.
   // When onboarding finishes, the main window is shown and needs to re-read
@@ -130,6 +140,13 @@ export default function App() {
   // This is the projects window — show the projects interface in its own window.
   if (isProjectsWindow()) {
     return <ProjectsWindow />;
+  }
+
+  // This is an editor window — each project opens in its own native window
+  // with its own independent store instance. No boot screen, app shell, or
+  // command palette.
+  if (isEditorWindow()) {
+    return <EditorWindow />;
   }
 
   // Show boot screen until the user clicks "Next" (which requires both the

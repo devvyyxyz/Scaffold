@@ -30,6 +30,33 @@
   align-items: center;
   justify-content: center;
   flex-shrink: 0;
+  gap: var(--sp-2);
+}
+
+.topbarSortBar {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--sp-2);
+  padding: 2px var(--sp-3);
+  background: var(--bg-sunken);
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-md);
+}
+.topbarSortIcon {
+  color: var(--fg-muted);
+  flex-shrink: 0;
+}
+.topbarSortSelect {
+  appearance: none;
+  background: transparent;
+  border: none;
+  font-size: var(--fs-xs);
+  font-weight: var(--fw-medium);
+  color: var(--fg-secondary);
+  cursor: pointer;
+  padding: 0;
+  outline: none;
+  min-width: 0;
 }
 
 .topbarViewToggle {

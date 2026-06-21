@@ -20,16 +20,23 @@ import { isTauri, isOnboardingWindow, showOnboardingWindow, fsReadTextFile, fsWr
 import { clearProjectCache, purgeExpiredArchives, unloadProject } from "./projects";
 
 const STORE_FILE = "settings.json";
+// App settings live in their own file, separate from the @tauri-apps/plugin-store
+// file (STORE_FILE, which holds the project registry under a `settings` key and
+// the registry under `projectRegistry`). Earlier builds wrote BOTH to
+// `settings.json` with incompatible JSON shapes, so loadSettings() kept reading
+// `onboarded: false` and onboarding appeared to restart after finishing.
+const APP_SETTINGS_FILE = "app-settings.json";
 let SETTINGS_FILE_PATH: string | null = null;
 
-/** Get the absolute path to the settings file in the app data directory */
+// Re-entrancy guard for `init()` — see the comment inside `init`.
+let initInFlight = false;
+
+/** Get the absolute path to the dedicated app-settings file in the app data dir. */
 async function getSettingsFilePath(): Promise<string> {
   if (!SETTINGS_FILE_PATH) {
     const appDataDir = await appLocalDataDir();
-    // Ensure proper path joining
     const normalizedDir = appDataDir.endsWith("/") ? appDataDir : appDataDir + "/";
-    SETTINGS_FILE_PATH = normalizedDir + "settings.json";
-    console.log("Settings file path:", SETTINGS_FILE_PATH);
+    SETTINGS_FILE_PATH = normalizedDir + APP_SETTINGS_FILE;
   }
   return SETTINGS_FILE_PATH;
 }
@@ -136,40 +143,38 @@ function mergeKeyboardShortcuts(
 }
 
 async function loadSettings(): Promise<AppSettings> {
+  // Primary store: the dedicated app-settings file (flat AppSettings JSON).
   try {
-    // Try loading from file first (most reliable across windows)
     const settingsPath = await getSettingsFilePath();
     const settingsJson = await fsReadTextFile(settingsPath);
     if (settingsJson) {
       const saved = JSON.parse(settingsJson) as Partial<AppSettings>;
-      console.log("Loaded settings from file:", saved);
-      const result = {
+      const result: AppSettings = {
         ...DEFAULT_SETTINGS,
         ...saved,
         keyboardShortcuts: mergeKeyboardShortcuts(saved.keyboardShortcuts),
       };
-      console.log("Merged settings from file, onboarded:", result.onboarded);
       return result;
     }
   } catch (error) {
+    // ENOENT on first run (or first run after upgrade) is expected — fall
+    // through to the migration path below.
     console.error("Failed to load settings from file:", error);
   }
 
-  // Fallback to store plugin
+  // Migration fallback: older builds persisted settings inside the store-plugin
+  // file (STORE_FILE) under a `settings` key. Pull them forward once, then
+  // persist to the dedicated file so we never read this legacy path again.
   try {
     const store = await readStore();
-    if (!store) {
-      console.log("No store available, using defaults");
-      return { ...DEFAULT_SETTINGS };
-    }
-    const saved = (await store.get<Partial<AppSettings>>("settings")) ?? {};
-    console.log("Loaded settings from store:", saved);
-    const result = {
+    const saved = store ? ((await store.get<Partial<AppSettings>>("settings")) ?? {}) : {};
+    const result: AppSettings = {
       ...DEFAULT_SETTINGS,
       ...saved,
       keyboardShortcuts: mergeKeyboardShortcuts(saved.keyboardShortcuts),
     };
-    console.log("Merged settings from store:", result);
+    // Best-effort migration write; ignore failures (next save will retry).
+    void saveSettings(result);
     return result;
   } catch (error) {
     console.error("Failed to load settings from store:", error);
@@ -179,34 +184,17 @@ async function loadSettings(): Promise<AppSettings> {
 
 async function saveSettings(settings: AppSettings): Promise<void> {
   try {
-    // Save to file first (most reliable across windows)
+    // Write the flat AppSettings blob to the dedicated app-settings file.
+    // We do NOT touch the store-plugin file (STORE_FILE): that holds the
+    // project registry and historically also held a nested copy of settings,
+    // and writing both to the same file with different shapes is what made
+    // loadSettings() read `onboarded: false` forever.
     const settingsPath = await getSettingsFilePath();
     const settingsJson = JSON.stringify(settings, null, 2);
     await fsWriteTextFile(settingsPath, settingsJson);
-    console.log("Settings saved to file at:", settingsPath, "onboarded:", settings.onboarded);
-    
-    // Also save to store plugin as backup
-    try {
-      const store = await readStore();
-      if (store) {
-        await store.set("settings", settings);
-        await store.save();
-        console.log("Settings also saved to store");
-      }
-    } catch (storeError) {
-      console.error("Failed to save to store (file save succeeded):", storeError);
-    }
-    
-    // Verify the file save
-    await new Promise(resolve => setTimeout(resolve, 100));
-    const verify = await fsReadTextFile(settingsPath);
-    if (verify) {
-      const verifyParsed = JSON.parse(verify);
-      console.log("Verification - read back from file, onboarded:", verifyParsed.onboarded);
-    }
   } catch (error) {
     console.error("Failed to save settings:", error);
-    // Settings are in-memory until the next save attempt.
+    // Settings remain in-memory until the next save attempt.
   }
 }
 
@@ -219,41 +207,48 @@ export const useAppStore = create<AppState>((set, get) => ({
   currentProjectId: null,
 
   async init() {
-    const settings = await loadSettings();
-    applyTheme(settings.theme);
+    // Guard against re-entrant calls. The main window kicks off `init()` on
+    // mount, and the `onboarding-complete` event fires another `init()` when
+    // onboarding finishes. Without this guard, a slow first call (e.g. archive
+    // purge) can resolve *after* the event-driven call and clobber the newer
+    // state — e.g. re-triggering `showOnboardingWindow()` with a stale
+    // `needsOnboarding: true` (the "window flashes then onboarding restarts"
+    // symptom).
+    if (initInFlight) return;
+    initInFlight = true;
+    try {
+      const settings = await loadSettings();
+      applyTheme(settings.theme);
 
-    // Purge archived projects older than the retention window before the
-    // dashboard renders. Best-effort; never blocks startup.
-    await purgeExpiredArchives();
+      // Purge archived projects older than the retention window before the
+      // dashboard renders. Best-effort; never blocks startup.
+      await purgeExpiredArchives();
 
-    const needsOnboarding = !settings.onboarded;
-    const onboardingWin = isOnboardingWindow();
+      const needsOnboarding = !settings.onboarded;
+      const onboardingWin = isOnboardingWindow();
 
-    console.log("Init: onboarded=", settings.onboarded, "needsOnboarding=", needsOnboarding, "isOnboardingWindow=", onboardingWin);
-
-    if (needsOnboarding && !onboardingWin) {
-      // Main window: onboarding is needed → show the onboarding window
-      console.log("Showing onboarding window from main window");
-      set({
-        settings,
-        needsOnboarding: true,
-        route: { name: "dashboard" },
-        ready: true,
-      });
-      showOnboardingWindow();
-    } else {
-      // Either onboarding is complete, or this IS the onboarding window.
-      set({
-        settings,
-        needsOnboarding,
-        route: needsOnboarding && onboardingWin
-          ? { name: "onboarding" }
-          : settings.onboarded
-            ? { name: "dashboard" }
+      if (needsOnboarding && !onboardingWin) {
+        // Main window: onboarding is needed → show the onboarding window.
+        set({
+          settings,
+          needsOnboarding: true,
+          route: { name: "dashboard" },
+          ready: true,
+        });
+        showOnboardingWindow();
+      } else {
+        // Either onboarding is complete, or this IS the onboarding window.
+        set({
+          settings,
+          needsOnboarding,
+          route: needsOnboarding && onboardingWin
+            ? { name: "onboarding" }
             : { name: "dashboard" },
-        ready: true,
-      });
-      console.log("Init complete, route:", needsOnboarding && onboardingWin ? "onboarding" : "dashboard");
+          ready: true,
+        });
+      }
+    } finally {
+      initInFlight = false;
     }
   },
 

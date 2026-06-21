@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react";
 import { open } from "@tauri-apps/plugin-dialog";
+import { WebviewWindow } from "@tauri-apps/api/webviewWindow";
 import { useAppStore } from "../lib/store";
 import { defaultProjectDir } from "../lib/paths";
 import { isTauri, isOnboardingWindow, closeOnboardingWindow } from "../lib/ipc";
@@ -69,26 +70,55 @@ export function Onboarding() {
     applyTheme(theme);
   }, [theme]);
 
-  // Disable window close button during onboarding to prevent premature exit
+  // Since the onboarding window is hidden (not destroyed) on completion and
+  // can be reopened via "restart onboarding" in Settings, two things must
+  // happen here:
+  //  1. Intercept the OS close-requested event and hide instead — close()
+  //     would destroy the window and it can't be recreated.
+  //  2. When the window becomes visible again, reset the wizard back to the
+  //     first step so the user doesn't land on a stale "Get started" screen.
   useEffect(() => {
     if (!isTauri() || !isOnboardingWindow()) return;
-    
-    // Try to disable the close button via Tauri API
-    const disableClose = async () => {
-      try {
-        const { WebviewWindow } = await import("@tauri-apps/api/webviewWindow");
-        const window = WebviewWindow.getCurrent();
-        if (window) {
-          // Set decorations to false programmatically as a fallback
-          await window.setDecorations(false);
-          console.log("Onboarding window decorations disabled");
-        }
-      } catch (error) {
-        console.error("Could not disable window decorations:", error);
-      }
+
+    const win = WebviewWindow.getCurrent();
+    if (!win) return;
+
+    let unlistenCloseRequested: (() => void) | null = null;
+    let unlistenFocus: (() => void) | null = null;
+
+    // Frameless frosted window — no decorations to disable, but keep the
+    // call defensive in case the config changes later.
+    win.setDecorations(false).catch((error) =>
+      console.error("Could not disable window decorations:", error)
+    );
+
+    // Never let the OS destroy this window — hide it instead so it can be
+    // reopened. Without this, clicking any close affordance would tear down
+    // the window and break "restart onboarding".
+    win
+      .onCloseRequested((event) => {
+        event.preventDefault();
+        void closeOnboardingWindow();
+      })
+      .then((un) => {
+        unlistenCloseRequested = un;
+      })
+      .catch((error) => console.error("Could not attach close-requested handler:", error));
+
+    // Reset the wizard whenever this window is brought back to the screen.
+    win
+      .onFocusChanged(({ payload: focused }) => {
+        if (focused) setStep(0);
+      })
+      .then((un) => {
+        unlistenFocus = un;
+      })
+      .catch((error) => console.error("Could not attach focus listener:", error));
+
+    return () => {
+      unlistenCloseRequested?.();
+      unlistenFocus?.();
     };
-    
-    disableClose();
   }, []);
 
   async function pickFolder() {

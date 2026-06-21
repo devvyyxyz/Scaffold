@@ -10,6 +10,7 @@
 import { invoke } from "@tauri-apps/api/core";
 import { WebviewWindow } from "@tauri-apps/api/webviewWindow";
 import { getVersion } from "@tauri-apps/api/app";
+import { open as openWithShell } from "@tauri-apps/plugin-shell";
 
 /** Whether we're running inside the Tauri webview (vs. a plain browser). */
 export function isTauri(): boolean {
@@ -53,6 +54,34 @@ export async function showProjectsWindow(): Promise<void> {
 export async function closeProjectsWindow(): Promise<void> {
   if (!isTauri()) return;
   await invoke("close_projects_window");
+}
+
+/**
+ * Open an external URL (https/mailto/etc.) in the user's default browser.
+ *
+ * Uses the shell plugin's `open()`, which dispatches to the OS default
+ * handler (`open` on macOS, `start` on Windows, `xdg-open` on Linux) rather
+ * than spawning a named CLI — so it's cross-platform and not subject to the
+ * shell scope restrictions that block `Command.create("open", ...)`.
+ * Falls back to a browser tab when running outside Tauri (dev mode).
+ */
+export async function openExternalUrl(url: string): Promise<void> {
+  if (!isTauri()) {
+    window.open(url, "_blank", "noopener,noreferrer");
+    return;
+  }
+  await openWithShell(url);
+}
+
+/**
+ * Reveal a file or folder in the OS file manager (Finder / Explorer / the
+ * desktop environment's file manager). Like {@link openExternalUrl} this goes
+ * through the shell plugin's `open()`, which the `tauri.conf.json` shell scope
+ * permits for local paths. Falls back to a no-op outside Tauri.
+ */
+export async function revealPath(path: string): Promise<void> {
+  if (!isTauri()) return;
+  await openWithShell(path);
 }
 
 /** Open the documentation window (a separate native window). Creates it if it

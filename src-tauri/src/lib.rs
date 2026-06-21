@@ -146,35 +146,47 @@ fn greet(name: &str) -> String {
 // Window management commands
 // ---------------------------------------------------------------------------
 
-/// Show the onboarding window and optionally hide the main window.
+/// Show the onboarding window and hide the main window.
+///
+/// The onboarding window is declared statically in tauri.conf.json with
+/// `visible: false`, so it already exists — we just reveal it. We never
+/// `close()` these auxiliary windows; `close()` destroys them in Tauri v2
+/// and they can't be recreated, so `hide()`/`show()` is used everywhere.
 #[command]
 fn show_onboarding_window(app: AppHandle) -> Result<(), String> {
-    // Show the onboarding window
+    // Reveal onboarding first, then hide main so there's never a frame with
+    // no visible window.
     if let Some(win) = app.get_webview_window("onboarding") {
         win.show().map_err(|e| e.to_string())?;
         win.set_focus().map_err(|e| e.to_string())?;
+    } else {
+        return Err("onboarding window not found".to_string());
     }
-    // Hide main window while onboarding is open
     if let Some(main) = app.get_webview_window("main") {
         main.hide().map_err(|e| e.to_string())?;
     }
     Ok(())
 }
 
-/// Close the onboarding window and show the main window.
-/// The main window re-runs its init to pick up saved settings.
+/// Hide the onboarding window and reveal the main window.
+///
+/// Ordering matters: we show + focus the main window and emit the
+/// `onboarding-complete` event *before* hiding the onboarding window. That
+/// way the invoking webview is still alive when the command returns, so the
+/// frontend `invoke()` resolves cleanly instead of rejecting mid-flight.
 #[command]
 fn close_onboarding_window(app: AppHandle) -> Result<(), String> {
-    if let Some(win) = app.get_webview_window("onboarding") {
-        win.close().map_err(|e| e.to_string())?;
-    }
+    // 1. Bring the main window back and tell it to re-read saved settings.
     if let Some(main) = app.get_webview_window("main") {
-        // Show the main window first, then re-init the store so it picks up
-        // the newly-saved settings (including onboarded: true).
         main.show().map_err(|e| e.to_string())?;
         main.set_focus().map_err(|e| e.to_string())?;
-        // Emit event so the frontend re-reads saved settings
         main.emit("onboarding-complete", ()).map_err(|e| e.to_string())?;
+    } else {
+        return Err("main window not found".to_string());
+    }
+    // 2. Now hide the onboarding window (keep it around for reuse).
+    if let Some(win) = app.get_webview_window("onboarding") {
+        win.hide().map_err(|e| e.to_string())?;
     }
     Ok(())
 }
@@ -185,6 +197,8 @@ fn show_projects_window(app: AppHandle) -> Result<(), String> {
     if let Some(win) = app.get_webview_window("projects") {
         win.show().map_err(|e| e.to_string())?;
         win.set_focus().map_err(|e| e.to_string())?;
+    } else {
+        return Err("projects window not found".to_string());
     }
     if let Some(main) = app.get_webview_window("main") {
         main.hide().map_err(|e| e.to_string())?;
@@ -192,15 +206,17 @@ fn show_projects_window(app: AppHandle) -> Result<(), String> {
     Ok(())
 }
 
-/// Close the projects window and show the main window.
+/// Hide the projects window and reveal the main window.
 #[command]
 fn close_projects_window(app: AppHandle) -> Result<(), String> {
-    if let Some(win) = app.get_webview_window("projects") {
-        win.close().map_err(|e| e.to_string())?;
-    }
     if let Some(main) = app.get_webview_window("main") {
         main.show().map_err(|e| e.to_string())?;
         main.set_focus().map_err(|e| e.to_string())?;
+    } else {
+        return Err("main window not found".to_string());
+    }
+    if let Some(win) = app.get_webview_window("projects") {
+        win.hide().map_err(|e| e.to_string())?;
     }
     Ok(())
 }

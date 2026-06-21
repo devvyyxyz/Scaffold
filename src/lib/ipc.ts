@@ -177,3 +177,4 @@ export async function getAppVersion(): Promise<string> {
     return "0.2.0";
   }
 }
+

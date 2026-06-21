@@ -16,7 +16,7 @@ import {
   Route,
   ThemePref,
 } from "./types";
-import { isTauri, isOnboardingWindow, showOnboardingWindow } from "./ipc";
+import { isTauri, isOnboardingWindow, showOnboardingWindow, fsReadTextFile, fsWriteTextFile } from "./ipc";
 import { clearProjectCache, purgeExpiredArchives, unloadProject } from "./projects";
 
 const STORE_FILE = "settings.json";
@@ -26,7 +26,9 @@ let SETTINGS_FILE_PATH: string | null = null;
 async function getSettingsFilePath(): Promise<string> {
   if (!SETTINGS_FILE_PATH) {
     const appDataDir = await appLocalDataDir();
-    SETTINGS_FILE_PATH = `${appDataDir}settings.json`;
+    // Ensure proper path joining
+    const normalizedDir = appDataDir.endsWith("/") ? appDataDir : appDataDir + "/";
+    SETTINGS_FILE_PATH = normalizedDir + "settings.json";
     console.log("Settings file path:", SETTINGS_FILE_PATH);
   }
   return SETTINGS_FILE_PATH;
@@ -96,12 +98,12 @@ async function readStore() {
   if (!isTauri()) return null;
   try {
     // Use a fixed path that's shared across all windows
-    const store = await load(SHARED_SETTINGS_PATH, { 
+    const store = await load(STORE_FILE, { 
       autoSave: false, 
       defaults: {},
       path: "app-data" // Store in app data directory, shared across windows
     });
-    console.log("Store loaded successfully from:", SHARED_SETTINGS_PATH);
+    console.log("Store loaded successfully from:", STORE_FILE);
     return store;
   } catch (error) {
     console.error("Failed to load store:", error);

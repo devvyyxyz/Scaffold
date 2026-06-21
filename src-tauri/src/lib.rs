@@ -6,7 +6,7 @@
 
 use std::fs;
 use std::path::PathBuf;
-use tauri::{command, AppHandle, Manager};
+use tauri::{command, AppHandle, Emitter, Manager};
 
 // ---------------------------------------------------------------------------
 // Filesystem commands
@@ -162,14 +162,19 @@ fn show_onboarding_window(app: AppHandle) -> Result<(), String> {
 }
 
 /// Close the onboarding window and show the main window.
+/// The main window re-runs its init to pick up saved settings.
 #[command]
 fn close_onboarding_window(app: AppHandle) -> Result<(), String> {
     if let Some(win) = app.get_webview_window("onboarding") {
         win.close().map_err(|e| e.to_string())?;
     }
     if let Some(main) = app.get_webview_window("main") {
+        // Show the main window first, then re-init the store so it picks up
+        // the newly-saved settings (including onboarded: true).
         main.show().map_err(|e| e.to_string())?;
         main.set_focus().map_err(|e| e.to_string())?;
+        // Emit event so the frontend re-reads saved settings
+        main.emit("onboarding-complete", ()).map_err(|e| e.to_string())?;
     }
     Ok(())
 }

@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
+import { listen } from "@tauri-apps/api/event";
 import { useAppStore } from "./lib/store";
-import { isOnboardingWindow, isDocsWindow, isProjectsWindow } from "./lib/ipc";
+import { isOnboardingWindow, isDocsWindow, isProjectsWindow, isTauri } from "./lib/ipc";
 import { isEditableTarget, matchesShortcut } from "./lib/keyboard";
 import { AppShell } from "./components/shell/AppShell";
 import { BootScreen } from "./components/shell/BootScreen";
@@ -31,6 +32,20 @@ export default function App() {
   useEffect(() => {
     init();
   }, [init]);
+
+  // Listen for onboarding-complete event from Rust backend.
+  // When onboarding finishes, the main window is shown and needs to re-read
+  // the saved settings (which now have onboarded: true).
+  useEffect(() => {
+    if (!isTauri()) return;
+    const unlisten = listen("onboarding-complete", () => {
+      console.log("onboarding-complete event received, re-initializing store");
+      useAppStore.getState().init();
+    });
+    return () => {
+      unlisten.then((fn) => fn());
+    };
+  }, []);
 
   // Global keyboard shortcuts. Driven by the persisted bindings so any rebinding
   // in Settings → Keyboard takes effect immediately.

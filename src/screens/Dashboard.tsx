@@ -1,5 +1,4 @@
 import { useEffect, useState } from "react";
-import { Command } from "@tauri-apps/plugin-shell";
 import { useAppStore } from "../lib/store";
 import {
   ARCHIVE_RETENTION_DAYS,
@@ -9,7 +8,7 @@ import {
   formatRelative,
 } from "../lib/projects";
 import { basename } from "../lib/paths";
-import { isTauri, isProjectsWindow, showProjectsWindow } from "../lib/ipc";
+import { isTauri, revealPath } from "../lib/ipc";
 import { EmptyState } from "../components/EmptyState";
 import { Button } from "../components/ui/Button";
 import { Icon } from "../components/ui/Icon";
@@ -19,7 +18,7 @@ import "./screens.css";
 
 /** Reveal a project folder in the OS file manager (Finder/Explorer). */
 function revealProject(path: string) {
-  if (isTauri()) Command.create("open", [path]).execute();
+  revealPath(path);
 }
 
 function getStackIcon(stack: ProjectStack): IconName {
@@ -52,12 +51,14 @@ export function Dashboard() {
     listProjects().then(setProjects);
   };
 
+  // Load the project list on mount. The Dashboard renders in both the main
+  // window and (optionally) a dedicated projects window; in either case it
+  // owns its own data loading. We deliberately do NOT auto-open the projects
+  // window from here — doing so hid the main window on every Dashboard mount
+  // (including right after onboarding), which produced a close-button loop
+  // and left the main window showing stale state.
   useEffect(() => {
-    if (isProjectsWindow()) {
-      reload();
-    } else {
-      void showProjectsWindow();
-    }
+    reload();
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 

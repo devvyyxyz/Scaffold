@@ -1,4 +1,4 @@
-import { open, Command } from "@tauri-apps/plugin-shell";
+import { revealPath, openExternalUrl } from "../lib/ipc";
 import { open as openDialog } from "@tauri-apps/plugin-dialog";
 import { useEffect, useMemo, useState } from "react";
 import { useAppStore } from "../lib/store";
@@ -378,12 +378,12 @@ export function Settings() {
 
             {section === "itchio" && (
               <SettingSection title="Product pages" icon="external">
-                <SettingRow title="Scaffold on itch.io" desc="Your public product page.">
+                  <SettingRow title="Scaffold on itch.io" desc="Your public product page.">
                   <Button
                     variant="secondary"
                     size="sm"
                     icon="external"
-                    onClick={() => isTauri() && open("https://devvyyxyz.itch.io/scaffold")}
+                    onClick={() => openExternalUrl("https://devvyyxyz.itch.io/scaffold")}
                   >
                     Open
                   </Button>
@@ -509,7 +509,7 @@ export function Settings() {
                 <div className="aboutLinkGrid">
                   <button
                     className="aboutLinkCard"
-                    onClick={() => isTauri() && open("https://discord.gg/scaffold")}
+                    onClick={() => openExternalUrl("https://discord.gg/scaffold")}
                   >
                     <span className="aboutLinkIcon"><Icon name="discord" size={18} /></span>
                     <span className="aboutLinkBody">
@@ -521,11 +521,11 @@ export function Settings() {
 
                   <button
                     className="aboutLinkCard"
-                    onClick={() => isTauri() && open("https://github.com/devvyyxyz/scaffold")}
+                    onClick={() => openExternalUrl("https://github.com/devvyyxyz/scaffold")}
                   >
                     <span className="aboutLinkIcon"><Icon name="github" size={18} /></span>
                     <span className="aboutLinkBody">
-                      <span className="aboutLinkTitle">Source &amp; docs</span>
+                      <span className="aboutLinkTitle">Source & docs</span>
                       <span className="aboutLinkDesc">View the source and read the docs on GitHub.</span>
                     </span>
                     <Icon name="chevron-right" size={16} className="aboutLinkChevron" />
@@ -533,7 +533,7 @@ export function Settings() {
 
                   <button
                     className="aboutLinkCard"
-                    onClick={() => isTauri() && open("https://github.com/devvyyxyz/scaffold/issues")}
+                    onClick={() => openExternalUrl("https://github.com/devvyyxyz/scaffold/issues")}
                   >
                     <span className="aboutLinkIcon"><Icon name="external" size={18} /></span>
                     <span className="aboutLinkBody">
@@ -546,8 +546,8 @@ export function Settings() {
                   <button
                     className="aboutLinkCard"
                     onClick={() => {
-                      if (isTauri() && settings.defaultProjectDir) {
-                        Command.create("open", [settings.defaultProjectDir]).execute();
+                      if (settings.defaultProjectDir) {
+                        revealPath(settings.defaultProjectDir);
                       }
                     }}
                   >

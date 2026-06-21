@@ -1,10 +1,9 @@
 import { useAppStore } from "../../lib/store";
 import { Route } from "../../lib/types";
-import { isTauri, openDocsWindow } from "../../lib/ipc";
+import { openDocsWindow, openExternalUrl } from "../../lib/ipc";
 import { Icon, IconName } from "../ui/Icon";
 import { Logo } from "../ui/Logo";
 import { Button } from "../ui/Button";
-import { Command } from "@tauri-apps/plugin-shell";
 import "./Sidebar.css";
 
 interface NavEntry {
@@ -37,13 +36,7 @@ export function Sidebar({ collapsed }: { collapsed: boolean }) {
   const recent = projects.filter((p) => !p.archived).slice(0, 4);
   const archiveCount = projects.filter((p) => p.archived).length;
 
-  const openDiscord = async () => {
-    if (isTauri()) {
-      await Command.create("open", [DISCORD_URL]).execute();
-    } else {
-      window.open(DISCORD_URL, "_blank", "noopener,noreferrer");
-    }
-  };
+  const openDiscord = () => openExternalUrl(DISCORD_URL);
 
   return (
     <nav className={`sidebar ${collapsed ? "collapsed" : ""}`}>

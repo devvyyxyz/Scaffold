@@ -84,5 +84,10 @@
     "category": "DeveloperTool",
     "shortDescription": "Visual React site builder",
     "longDescription": "Local-first visual builder for composing React sites and exporting clean, framework-ready code."
+  },
+  "plugins": {
+    "shell": {
+      "open": "^((mailto:\\w+)|(tel:\\w+)|(https?://\\w+).+|[A-Za-z]:[\\\\/].*|/.*)$"
+    }
   }
 }
